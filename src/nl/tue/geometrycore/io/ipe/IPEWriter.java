@@ -1023,11 +1023,13 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
             case CENTER:
             case TOP:
             case BOTTOM:
+            case BASELINE_CENTER:
                 halign = " halign=\"center\"";
                 break;
             case RIGHT:
             case TOP_RIGHT:
             case BOTTOM_RIGHT:
+            case BASELINE_RIGHT:
                 halign = " halign=\"right\"";
                 break;
             default:

@@ -24,8 +24,26 @@ public enum TextAnchor {
      */
     BASELINE {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
-                    return null;
+                public Vector getPositionFor(Rectangle rect, double baseline) {
+                    return new Vector(rect.getLeft(), baseline);
+                }
+            },
+    /**
+     * The anchor is on the baseline, but horizontally in the middle.
+     */
+    BASELINE_CENTER {
+                @Override
+                public Vector getPositionFor(Rectangle rect, double baseline) {
+                    return new Vector(rect.center().getX(),baseline);
+                }
+            },
+    /**
+     * The anchor is on the baseline, on the right side.
+     */
+    BASELINE_RIGHT {
+                @Override
+                public Vector getPositionFor(Rectangle rect, double baseline) {
+                    return new Vector(rect.getRight(),baseline);
                 }
             },
     /**
@@ -33,7 +51,7 @@ public enum TextAnchor {
      */
     CENTER {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return rect.center();
                 }
             },
@@ -42,7 +60,7 @@ public enum TextAnchor {
      */
     LEFT {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return new Vector(rect.getLeft(), rect.verticalCenter());
                 }
             },
@@ -51,7 +69,7 @@ public enum TextAnchor {
      */
     RIGHT {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return new Vector(rect.getRight(), rect.verticalCenter());
                 }
             },
@@ -60,7 +78,7 @@ public enum TextAnchor {
      */
     TOP {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return new Vector(rect.horizontalCenter(), rect.getTop());
                 }
             },
@@ -69,7 +87,7 @@ public enum TextAnchor {
      */
     BOTTOM {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return new Vector(rect.horizontalCenter(), rect.getBottom());
                 }
             },
@@ -78,7 +96,7 @@ public enum TextAnchor {
      */
     TOP_LEFT {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return rect.leftTop();
                 }
             },
@@ -87,7 +105,7 @@ public enum TextAnchor {
      */
     TOP_RIGHT {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return rect.rightTop();
                 }
             },
@@ -96,7 +114,7 @@ public enum TextAnchor {
      */
     BOTTOM_LEFT {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return rect.leftBottom();
                 }
             },
@@ -105,7 +123,7 @@ public enum TextAnchor {
      */
     BOTTOM_RIGHT {
                 @Override
-                public Vector getPositionFor(Rectangle rect) {
+                public Vector getPositionFor(Rectangle rect, double baseline) {
                     return rect.rightBottom();
                 }
             };
@@ -117,5 +135,5 @@ public enum TextAnchor {
      * @param rect rectangle bounding the desired text
      * @return anchor position
      */
-    public abstract Vector getPositionFor(Rectangle rect);
+    public abstract Vector getPositionFor(Rectangle rect, double baseline);
 }
