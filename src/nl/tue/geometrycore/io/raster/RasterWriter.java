@@ -320,8 +320,7 @@ public class RasterWriter extends BaseWriter<BufferedImage, Graphics2D> {
             Rectangle2D rect = _graphics.getFontMetrics().getStringBounds(text, _graphics);
             // NB: flip Y axis?
             Rectangle textbox = new Rectangle(rect.getMinX(), rect.getMaxX(), -rect.getMaxY(), -rect.getMinY());
-            double relbaseline = location.getY() - textbox.getBottom();
-            baselinePosition = Vector.subtract(location, _anchor.getPositionFor(textbox,relbaseline));
+            baselinePosition = Vector.subtract(location, _anchor.getPositionFor(textbox,0));
         }
 
         AffineTransform oldtransform = _graphics.getTransform();

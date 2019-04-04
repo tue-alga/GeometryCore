@@ -130,9 +130,9 @@ public enum TextAnchor {
 
     /**
      * Gets the position of this anchor, with respect to the provided rectangle.
-     * Note that it returns null for the BASELINE case.
      *
      * @param rect rectangle bounding the desired text
+     * @param baseline vertical coordinate of the baseline
      * @return anchor position
      */
     public abstract Vector getPositionFor(Rectangle rect, double baseline);
