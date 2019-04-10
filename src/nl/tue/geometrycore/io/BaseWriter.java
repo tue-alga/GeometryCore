@@ -15,6 +15,7 @@ import nl.tue.geometrycore.geometryrendering.styling.Dashing;
 import nl.tue.geometrycore.geometryrendering.styling.Hashures;
 import nl.tue.geometrycore.geometryrendering.glyphs.PointStyle;
 import nl.tue.geometrycore.geometryrendering.GeometryRenderer;
+import nl.tue.geometrycore.geometryrendering.styling.FontStyle;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
 import nl.tue.geometrycore.geometryrendering.styling.TextAnchor;
 
@@ -53,6 +54,7 @@ public abstract class BaseWriter<TResult, TRenderObject> implements GeometryRend
     protected double _forwardArrowsize = 1;
     protected TextAnchor _anchor = TextAnchor.BASELINE;
     protected double _textsize = 1;
+    protected FontStyle _fontstyle = FontStyle.NORMAL;
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="INTERFACE IMPLEMENTATION">
@@ -128,8 +130,14 @@ public abstract class BaseWriter<TResult, TRenderObject> implements GeometryRend
     
     @Override
     public void setTextStyle(TextAnchor anchor, double textsize) {
+        setTextStyle(anchor, textsize, FontStyle.NORMAL);
+    }
+    
+    @Override
+    public void setTextStyle(TextAnchor anchor, double textsize, FontStyle fontstyle) {
         _anchor = anchor;
         _textsize = textsize;
+        _fontstyle = fontstyle;
     }
     
     @Override

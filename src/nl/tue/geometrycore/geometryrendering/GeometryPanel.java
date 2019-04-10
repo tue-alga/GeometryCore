@@ -33,12 +33,13 @@ import javax.swing.JPanel;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
+import nl.tue.geometrycore.geometryrendering.styling.FontStyle;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
 import nl.tue.geometrycore.io.LayeredWriter;
 import nl.tue.geometrycore.io.raster.RasterWriter;
 
 /**
- * 
+ *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
 public abstract class GeometryPanel extends JPanel implements GeometryRenderer<Object>, MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
@@ -190,7 +191,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     public void draw(Vector location, String text) {
         _renderer.draw(location, text);
     }
-    
+
     public void setLayer(String layer) {
         if (_renderer instanceof LayeredWriter) {
             ((LayeredWriter) _renderer).setLayer(layer);
@@ -204,7 +205,12 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
 
     @Override
     public void setTextStyle(TextAnchor anchor, double textsize) {
-        _renderer.setTextStyle(anchor, textsize);
+        setTextStyle(anchor, textsize, FontStyle.NORMAL);
+    }
+
+    @Override
+    public void setTextStyle(TextAnchor anchor, double textsize, FontStyle fontstyle) {
+        _renderer.setTextStyle(anchor, textsize, fontstyle);
     }
 
     @Override

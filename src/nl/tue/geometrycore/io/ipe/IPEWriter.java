@@ -545,12 +545,13 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
     }
 
     /**
-     * Configures how text is positioned and sized. If scaleText is true, transformations on the text items are set to "affine" and 
-     * matrix transformations are used to determine the text size, using the
-     * given baseTextSize as the font size to be scaled. If set to false, then
-     * the font size is configured directly: no scaling is performed and transformations on the text are set to "rigid". Note that
-     * this may give warped text if the resulting font size is very small or
-     * very big.  
+     * Configures how text is positioned and sized. If scaleText is true,
+     * transformations on the text items are set to "affine" and matrix
+     * transformations are used to determine the text size, using the given
+     * baseTextSize as the font size to be scaled. If set to false, then the
+     * font size is configured directly: no scaling is performed and
+     * transformations on the text are set to "rigid". Note that this may give
+     * warped text if the resulting font size is very small or very big.
      *
      * Raster rendering and IPE's text size scale differently.
      * useTextDiscrepancy indicates whether compensation needs to happen, using
@@ -579,6 +580,27 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
         try {
             ensurePage();
 
+            String fontSetting = "";
+            String fontSettingEnd = "";
+            if (!_textSerifs) {
+                fontSetting += "\\textsf{";
+                fontSettingEnd += "}";
+            }
+            switch (_fontstyle) {
+                default:
+                case NORMAL:
+                    // do nothing
+                    break;
+                case BOLD:
+                    fontSetting += "\\textbf{";
+                    fontSettingEnd += "}";
+                    break;
+                case ITALICS:
+                    fontSetting += "\\textit{";
+                    fontSettingEnd += "}";
+                    break;
+            }
+
             if (_scaleText) {
                 AffineTransform transform = new AffineTransform();
                 transform.translate(location.getX(), location.getY());
@@ -593,9 +615,9 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
                         + getLayerAttribute()
                         + getOpacityAttribute()
                         + ">"
-                        + (_textSerifs ? "" : "\\textsf{")
+                        + fontSetting
                         + text
-                        + (_textSerifs ? "" : "}")
+                        + fontSettingEnd
                         + "</text>\n");
                 popMatrix();
             } else {
@@ -608,9 +630,9 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
                         + getLayerAttribute()
                         + getOpacityAttribute()
                         + ">"
-                        + (_textSerifs ? "" : "\\textsf{")
+                       + fontSetting
                         + text
-                        + (_textSerifs ? "" : "}")
+                        + fontSettingEnd
                         + "</text>\n");
             }
         } catch (IOException ex) {

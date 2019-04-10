@@ -40,6 +40,7 @@ import nl.tue.geometrycore.geometryrendering.AffineTransformUtil;
 import nl.tue.geometrycore.geometryrendering.GeometryPanel;
 import nl.tue.geometrycore.geometryrendering.glyphs.Glyph;
 import nl.tue.geometrycore.geometryrendering.styling.Dashing;
+import nl.tue.geometrycore.geometryrendering.styling.FontStyle;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
 import nl.tue.geometrycore.geometryrendering.styling.TextAnchor;
 import nl.tue.geometrycore.io.BaseWriter;
@@ -342,6 +343,12 @@ public class RasterWriter extends BaseWriter<BufferedImage, Graphics2D> {
         super.setTextStyle(anchor, textsize);
         updateStyleObjects(false, true);
     }
+    
+    @Override
+    public void setTextStyle(TextAnchor anchor, double textsize, FontStyle fontstyle) {
+        super.setTextStyle(anchor, textsize, fontstyle);
+        updateStyleObjects(false, true);
+    }
 
     @Override
     public void setSizeMode(SizeMode sizeMode) {
@@ -585,7 +592,20 @@ public class RasterWriter extends BaseWriter<BufferedImage, Graphics2D> {
             _graphics.setStroke(_dashedstroke);
         }
         if (text) {
-            _graphics.setFont(new Font("SansSerif", Font.PLAIN, (int) Math.round(sizeViewbased(_textsize))));
+            int style;
+            switch (_fontstyle) {
+                default:
+                case NORMAL:
+                    style = Font.PLAIN;
+                    break;
+                case BOLD:
+                    style = Font.BOLD;
+                    break;
+                case ITALICS:
+                    style = Font.ITALIC;
+                    break;
+            }
+            _graphics.setFont(new Font("SansSerif", style, (int) Math.round(sizeViewbased(_textsize))));
         }
     }
     //</editor-fold>

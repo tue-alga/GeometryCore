@@ -17,6 +17,7 @@ import java.util.Collection;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
+import nl.tue.geometrycore.geometryrendering.styling.FontStyle;
 
 /**
  * This is interface should be used for rendering as much as possible. This
@@ -40,13 +41,24 @@ public interface GeometryRenderer<TRenderObject> {
     public void setAlpha(double alpha);
 
     /**
-     * Configures the appearance of text, through an anchor and text size.
+     * Configures the appearance of text, through an anchor and text size. Font style defaults to normal text.
      *
      * @param anchor anchor for text placement
      * @param textsize size of text: world or screen space depends on
      * {@link #setSizeMode}
      */
     public void setTextStyle(TextAnchor anchor, double textsize);
+
+    /**
+     * Configures the appearance of text, through an anchor and text size, and
+     * font style.
+     *
+     * @param anchor anchor for text placement
+     * @param textsize size of text: world or screen space depends on
+     * {@link #setSizeMode}
+     * @param fontstyle which type of font to use
+     */
+    public void setTextStyle(TextAnchor anchor, double textsize, FontStyle fontstyle);
 
     /**
      * Configures whether all style sizes (i.e., pointsize, arrowsize,
@@ -147,18 +159,18 @@ public interface GeometryRenderer<TRenderObject> {
 
     /**
      * Combines all following draw operations into a single group, until
-     * {@link #popGroup} is called. Calls to
-     * {@link #pushMatrix} and {@link #popMatrix}, {@link #pushClipping} and
-     * {@link #popClipping}, and {@link #pushGroup} and {@link #popGroup} should
-     * follow a combined proper nesting structure.
+     * {@link #popGroup} is called. Calls to {@link #pushMatrix} and
+     * {@link #popMatrix}, {@link #pushClipping} and {@link #popClipping}, and
+     * {@link #pushGroup} and {@link #popGroup} should follow a combined proper
+     * nesting structure.
      */
     public void pushGroup();
 
     /**
-     * Ends the most recently started group. Calls to
-     * {@link #pushMatrix} and {@link #popMatrix}, {@link #pushClipping} and
-     * {@link #popClipping}, and {@link #pushGroup} and {@link #popGroup} should
-     * follow a combined proper nesting structure.
+     * Ends the most recently started group. Calls to {@link #pushMatrix} and
+     * {@link #popMatrix}, {@link #pushClipping} and {@link #popClipping}, and
+     * {@link #pushGroup} and {@link #popGroup} should follow a combined proper
+     * nesting structure.
      */
     public void popGroup();
     //</editor-fold>
