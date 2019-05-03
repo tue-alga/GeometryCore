@@ -26,10 +26,12 @@ import nl.tue.geometrycore.geometry.curved.CircularArc;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
 import nl.tue.geometrycore.geometry.linear.PolyLine;
 import nl.tue.geometrycore.geometry.linear.Polygon;
+import nl.tue.geometrycore.geometry.linear.Rectangle;
 import nl.tue.geometrycore.geometry.mix.GeometryCycle;
 import nl.tue.geometrycore.geometry.mix.GeometryGroup;
 import nl.tue.geometrycore.geometry.mix.GeometryString;
 import nl.tue.geometrycore.geometryrendering.styling.Dashing;
+import nl.tue.geometrycore.geometryrendering.styling.TextAnchor;
 import nl.tue.geometrycore.io.BaseReader;
 import nl.tue.geometrycore.io.ReadItem;
 import nl.tue.geometrycore.util.ClipboardUtil;
@@ -49,6 +51,7 @@ public class IPEReader extends BaseReader {
     private Map<String, Double> _namedSymbolsizes;
     private Map<String, Double> _namedTransparencies;
     private Map<String, Dashing> _namedDashing;
+    private Rectangle _pagebounds = IPEWriter.getA4Size();
     private final BufferedReader _source;
     private List<ReadItem> _items;
     private String _currentLayer;
@@ -107,8 +110,34 @@ public class IPEReader extends BaseReader {
         _source.close();
     }
 
+    /**
+     * Reads only the items from a specific page. First page is numbered 1. Any
+     * value below 1 will result in all pages being read.
+     *
+     * @param items
+     * @param page
+     * @throws IOException
+     */
+    public List<ReadItem> read(int page) throws IOException {
+        List<ReadItem> items = new ArrayList();
+        read(items, page);
+        return items;
+    }
+
     @Override
     public void read(List<ReadItem> items) throws IOException {
+        read(items, -1);
+    }
+
+    /**
+     * Reads only the items from a specific page. First page is numbered 1. Any
+     * value below 1 will result in all pages being read.
+     *
+     * @param items
+     * @param page
+     * @throws IOException
+     */
+    public void read(List<ReadItem> items, int page) throws IOException {
 
         _currentLayer = "default";
         _items = items;
@@ -118,6 +147,8 @@ public class IPEReader extends BaseReader {
         boolean onpage = line.startsWith("<ipeselection");
         boolean instyle = false;
 
+        int pageNumber = 0;
+
         if (onpage) {
             // selection
             _namedStrokewidths = null;
@@ -125,6 +156,7 @@ public class IPEReader extends BaseReader {
             _namedTransparencies = null;
             _namedColors = null;
             _namedDashing = null;
+            pageNumber++;
         } else {
             _namedStrokewidths = new HashMap();
             _namedSymbolsizes = new HashMap();
@@ -142,6 +174,7 @@ public class IPEReader extends BaseReader {
         while (line != null) {
 
             if (line.startsWith("<page")) {
+                pageNumber++;
                 onpage = true;
             } else if (line.startsWith("</page")) {
                 onpage = false;
@@ -149,19 +182,23 @@ public class IPEReader extends BaseReader {
                 instyle = true;
             } else if (line.startsWith("</ipestyle")) {
                 instyle = false;
-            } else if (onpage) {
+            } else if (onpage && (page < 1 || pageNumber == page)) {
 
                 if (line.startsWith("<path")) {
                     ReadItem item = readPath(line);
+                    item.setPageNumber(pageNumber);
                     _items.add(item);
                 } else if (line.startsWith("<use") && line.contains("name=\"mark")) {
                     ReadItem item = readMark(line);
+                    item.setPageNumber(pageNumber);
                     _items.add(item);
                 } else if (line.startsWith("<group")) {
                     ReadItem item = readGroup(line);
+                    item.setPageNumber(pageNumber);
                     _items.add(item);
                 } else if (line.startsWith("<text")) {
                     ReadItem item = readText(line);
+                    item.setPageNumber(pageNumber);
                     _items.add(item);
                 }
             } else if (instyle) {
@@ -173,9 +210,11 @@ public class IPEReader extends BaseReader {
                 } else if (line.startsWith("<color")) {
                     _namedColors.put(readAttribute(line, "name="), interpretColor(readAttribute(line, "value=")));
                 } else if (line.startsWith("<symbolsize")) {
-                    _namedSymbolsizes.put(readAttribute(line, "name="), interpretSize(readAttribute(line, "value=")));
+                    _namedSymbolsizes.put(readAttribute(line, "name="), interpretSymbolSize(readAttribute(line, "value=")));
                 } else if (line.startsWith("<opacity")) {
                     _namedTransparencies.put(readAttribute(line, "name="), interpretTransparency(readAttribute(line, "value=")));
+                } else if (line.startsWith("<layout ")) {
+                    _pagebounds = interpretPageBounds(readAttribute(line, "paper="));
                 }
             }
 
@@ -184,6 +223,32 @@ public class IPEReader extends BaseReader {
     }
     //</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="QUERIES">
+    public Map<String, Color> getNamedColors() {
+        return _namedColors;
+    }
+
+    public Map<String, Double> getNamedStrokeWidths() {
+        return _namedStrokewidths;
+    }
+
+    public Map<String, Double> getNamedSymbolSizes() {
+        return _namedSymbolsizes;
+    }
+
+    public Map<String, Double> getNamedTransparencies() {
+        return _namedTransparencies;
+    }
+
+    public Map<String, Dashing> getNamedDashing() {
+        return _namedDashing;
+    }
+
+    public Rectangle getPageBounds() {
+        return _pagebounds;
+    }
+
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">    
     /**
      * Reads the value of a given XML attribute in a given line.
@@ -230,9 +295,9 @@ public class IPEReader extends BaseReader {
         // start reading geometries
         List<BaseGeometry> complexgeos = new ArrayList();
         List<Vector> polyline = null;
-        
+
         line = _source.readLine();
-        
+
         Vector first = null;
         Vector prev = null;
         int nummoves = 0;
@@ -316,7 +381,7 @@ public class IPEReader extends BaseReader {
 
             } else if (line.endsWith(" c")) {
                 Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Encountered Bézier curve, sampling for now...");
-               
+
                 int samples = 20;
                 if (polyline == null) {
                     polyline = new ArrayList();
@@ -344,7 +409,7 @@ public class IPEReader extends BaseReader {
                 polyline.add(p3);
 
                 prev = p3;
-            } else if (line.indexOf(' ', line.indexOf(' ')+1) < 0) {
+            } else if (line.indexOf(' ', line.indexOf(' ') + 1) < 0) {
                 // point for curve
                 Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected command: \"{0}\"", line);
             } else {
@@ -403,7 +468,7 @@ public class IPEReader extends BaseReader {
         Color stroke = interpretColor(readAttribute(line, "stroke="));
         Color fill = interpretColor(readAttribute(line, "fill="));
 
-        double size = interpretSize(readAttribute(line, "size="));
+        double size = interpretSymbolSize(readAttribute(line, "size="));
         double[][] m = interpretMatrix(readAttribute(line, "matrix="));
 
         Dashing dash = interpretDash(readAttribute(line, "dash="));
@@ -527,7 +592,9 @@ public class IPEReader extends BaseReader {
         double[][] m = interpretMatrix(readAttribute(line, "matrix="));
         Vector pos = interpretPosition(readAttribute(line, "pos="), m);
 
+        double size = interpretTextSize(readAttribute(line, "size="));
         double alpha = interpretTransparency(readAttribute(line, "opacity="));
+        TextAnchor anchor = interpretTextAnchor(readAttribute(line, "halign="), readAttribute(line, "valign="));
 
         // start reading geometries
         String string = line.substring(line.indexOf(">") + 1);
@@ -545,6 +612,8 @@ public class IPEReader extends BaseReader {
         item.setAlpha(alpha);
         item.setLayer(_currentLayer);
         item.setStroke(stroke);
+        item.setSymbolsize(size * m[0][0]);
+        item.setAnchor(anchor);
 
         return item;
     }
@@ -635,11 +704,29 @@ public class IPEReader extends BaseReader {
     }
 
     /**
+     * Interpret a text-size value, possibly looking it up in the named values.
+     *
+     * @param attr Attribute value
+     */
+    private double interpretTextSize(String attr) {
+        if (attr == null) {
+            return 1;
+        }
+
+        try {
+            return Double.parseDouble(attr);
+        } catch (NumberFormatException ex) {
+            Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Not (yet) supporting named text-sizes", attr);
+            return 1;
+        }
+    }
+
+    /**
      * Interpret a point-size value, possibly looking it up in the named values.
      *
      * @param attr Attribute value
      */
-    private double interpretSize(String attr) {
+    private double interpretSymbolSize(String attr) {
         if (attr == null) {
             return 1;
         }
@@ -654,10 +741,79 @@ public class IPEReader extends BaseReader {
             if (_namedSymbolsizes.containsKey(attr)) {
                 return _namedSymbolsizes.get(attr);
             } else {
-                Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected size name: {0}", attr);
+                Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected symbol-size name: {0}", attr);
                 return 1;
             }
         }
+    }
+
+    private TextAnchor interpretTextAnchor(String hattr, String vattr) {
+        TextAnchor anchor = TextAnchor.BASELINE;
+        if (hattr != null) {
+            if (hattr.equals("center")) {
+                anchor = TextAnchor.BASELINE_CENTER;
+            } else if (hattr.equals("right")) {
+                anchor = TextAnchor.BASELINE_RIGHT;
+            }
+        }
+
+        if (vattr != null) {
+            if (vattr.equals("center")) {
+                switch (anchor) {
+                    case BASELINE:
+                        anchor = TextAnchor.LEFT;
+                        break;
+                    case BASELINE_CENTER:
+                        anchor = TextAnchor.CENTER;
+                        break;
+                    case BASELINE_RIGHT:
+                        anchor = TextAnchor.RIGHT;
+                        break;
+                }
+            } else if (vattr.equals("top")) {
+                switch (anchor) {
+                    case BASELINE:
+                        anchor = TextAnchor.TOP_LEFT;
+                        break;
+                    case BASELINE_CENTER:
+                        anchor = TextAnchor.TOP;
+                        break;
+                    case BASELINE_RIGHT:
+                        anchor = TextAnchor.TOP_RIGHT;
+                        break;
+                }
+            } else if (vattr.equals("bottom")) {
+                switch (anchor) {
+                    case BASELINE:
+                        anchor = TextAnchor.BOTTOM_LEFT;
+                        break;
+                    case BASELINE_CENTER:
+                        anchor = TextAnchor.BOTTOM;
+                        break;
+                    case BASELINE_RIGHT:
+                        anchor = TextAnchor.BOTTOM_RIGHT;
+                        break;
+                }
+            }
+        }
+
+        return anchor;
+    }
+
+    /**
+     * Interpret a page size from the IPE style specification.
+     *
+     * @param attr two space-separated dimensions (width followed by height)
+     * @return a rectangle matching the page boundaries
+     */
+    private Rectangle interpretPageBounds(String attr) {
+        if (attr == null) {
+            return null;
+        }
+        String[] split = attr.split(" ");
+        double width = Double.parseDouble(split[0]);
+        double height = Double.parseDouble(split[1]);
+        return new Rectangle(0, width, 0, height);
     }
 
     /**

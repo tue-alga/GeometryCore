@@ -11,6 +11,7 @@ import java.util.Map;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometryrendering.styling.Dashing;
+import nl.tue.geometrycore.geometryrendering.styling.TextAnchor;
 
 /**
  * Class to represent an object that has been read via some inherited class of
@@ -30,6 +31,8 @@ public class ReadItem implements GeometryConvertable {
     private double _alpha = 1;
     private String _layer = null;
     private Map<String,String> _aux = null;
+    private int _pagenumber = 1;
+    private TextAnchor _anchor = TextAnchor.BASELINE;
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="QUERIES">
@@ -39,7 +42,23 @@ public class ReadItem implements GeometryConvertable {
     }
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="GET & SET">    
+    //<editor-fold defaultstate="collapsed" desc="GET & SET">  
+    public int getPageNumber() {
+        return _pagenumber;
+    }
+
+    public void setPageNumber(int pageNumber) {
+        _pagenumber = pageNumber;
+    }
+
+    public TextAnchor getAnchor() {
+        return _anchor;
+    }
+
+    public void setAnchor(TextAnchor anchor) {
+        _anchor = anchor;
+    }
+    
     public double getAlpha() {
         return _alpha;
     }
