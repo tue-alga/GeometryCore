@@ -18,10 +18,10 @@ import nl.tue.geometrycore.graphs.simple.SimpleGraph;
 import nl.tue.geometrycore.graphs.simple.SimpleVertex;
 
 /**
- * Implementation of Prim's minimum spanning tree algorithm, running in O(V +
- * E log V) time. Note that an instance of this class assumes the vertices of
- * the graph do not change. If the graph is changed, create a fresh instance for
- * new spanning-tree queries.
+ * Implementation of Prim's minimum spanning tree algorithm, running in O(V + E
+ * log V) time. Note that an instance of this class assumes the vertices of the
+ * graph do not change. If the graph is changed, create a fresh instance for new
+ * spanning-tree queries.
  *
  * @param <TGraph> Class of graph to be used for spanning-tree computations
  * @param <TGeom> Class of edge geometry used by TGraph
@@ -35,8 +35,9 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
     private final List<VertexState> vstates;
     private final TGraph graph;
     private final EdgeWeightInterface ewi;
+    private double lengthOfLastQuery = Double.NaN;
     //</editor-fold>    
-    
+
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
     public MinimumSpanningTree(TGraph graph, EdgeWeightInterface ewi) {
         this.graph = graph;
@@ -47,8 +48,17 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
         this.ewi = ewi;
     }
     //</editor-fold>    
-        
+
     //<editor-fold defaultstate="collapsed" desc="QUERIES">
+    /**
+     * Returns the total length of the tree or forest computed by this object.
+     *
+     * @return sum of edge weights
+     */
+    public double getWeightOfLastQuery() {
+        return lengthOfLastQuery;
+    }
+
     /**
      * Computes the minimum spanning forest.
      *
@@ -57,6 +67,7 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
      */
     public List<DirectedTreeNode<TGraph, TGeom, TVertex, TEdge>> computeMinimumSpanningForest() {
 
+        lengthOfLastQuery = 0;
         IndexedPriorityQueue<VertexState> queue = new IndexedPriorityQueue(vstates.size(), new Comparator<VertexState>() {
 
             @Override
@@ -75,8 +86,9 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
 
         while (!queue.isEmpty()) {
             VertexState vs = queue.poll();
+            lengthOfLastQuery += Double.isFinite(vs.incoming_weight) ? vs.incoming_weight : 0;
             vs.treenode = new DirectedTreeNode(vs.vertex, vs.incoming_edge);
-            
+
             if (vs.incoming_edge == null) {
                 // new component, add this as a root node
                 roots.add(vs.treenode);
@@ -111,6 +123,8 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
     public DirectedTreeNode<TGraph, TGeom, TVertex, TEdge> computeMinimumSpanningTree(TVertex vertex) {
         assert graph.getVertices().get(vertex.getGraphIndex()) == vertex;
 
+        lengthOfLastQuery = 0;
+
         IndexedPriorityQueue<VertexState> queue = new IndexedPriorityQueue(vstates.size(), new Comparator<VertexState>() {
 
             @Override
@@ -131,6 +145,7 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
 
         while (!queue.isEmpty()) {
             VertexState vs = queue.poll();
+            lengthOfLastQuery += vs.incoming_weight;
             vs.treenode = new DirectedTreeNode(vs.vertex, vs.incoming_edge);
             if (vs.incoming_edge == null) {
                 assert vs.vertex == vertex;
@@ -159,7 +174,7 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
         return vstates.get(vertex.getGraphIndex()).treenode;
     }
     //</editor-fold>    
-    
+
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">
     private class VertexState extends BasicIndexable {
 
