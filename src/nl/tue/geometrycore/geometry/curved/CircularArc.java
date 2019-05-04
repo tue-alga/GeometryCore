@@ -93,6 +93,40 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
         arc.reverse();
         return arc;
     }
+
+    /**
+     * Constructs an arc from start to endpoint, that goes through the given
+     * midpoint. The method assumes that start and end are different, and if mid
+     * is collinear with the given start and end, then it is in between these.
+     * If these conditions are violated, null is returned.
+     *
+     * @param start
+     * @param mid
+     * @param end
+     * @return
+     */
+    public static CircularArc byThroughPoint(Vector start, Vector mid, Vector end) {
+        Line lA = Line.bisector(start, mid);
+        Line lB = Line.bisector(mid, end);
+
+        List<BaseGeometry> intersect = lA.intersect(lB);
+        if (intersect.isEmpty()) {
+            if (start.squaredDistanceTo(mid) + mid.squaredDistanceTo(end) <= start.squaredDistanceTo(end)) {
+                return new CircularArc(null, start, end, true);
+            } else {
+                return null;
+            }
+        } else if (intersect.get(0).getGeometryType() == GeometryType.VECTOR) {
+            Vector dirEnd = Vector.subtract(end, start);
+            Vector dirMid = Vector.subtract(mid, start);
+
+            Vector i = (Vector) intersect.get(0);
+            return new CircularArc(i, start, end, Vector.crossProduct(dirMid, dirEnd) >= 0);
+        } else {
+            // start == end
+            return null;
+        }
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="GET & SET">
@@ -165,7 +199,7 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
         direction.normalize();
         return direction;
     }
-    
+
     @Override
     public double getMinimumParameter() {
         return 0;
@@ -179,12 +213,12 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
     @Override
     public Vector getPointAt(double t) {
         if (_center == null) {
-            Vector v = Vector.subtract(_end,_start);
+            Vector v = Vector.subtract(_end, _start);
             v.scale(t);
             v.translate(_start);
             return v;
         } else {
-            Vector v = Vector.subtract(_start,_center);
+            Vector v = Vector.subtract(_start, _center);
             double a = centralAngle();
             v.rotate(t * a);
             v.translate(_center);
@@ -623,7 +657,7 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
                         break;
                     default:
                         Logger.getLogger(CircularArc.class.getName()).log(Level.SEVERE,
-                                "Unexpected geometry type in circular arc intersection: {0}", 
+                                "Unexpected geometry type in circular arc intersection: {0}",
                                 intgeom.getGeometryType());
                         break;
                 }
