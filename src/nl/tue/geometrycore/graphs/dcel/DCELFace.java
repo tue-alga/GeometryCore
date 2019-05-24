@@ -7,6 +7,7 @@
 package nl.tue.geometrycore.graphs.dcel;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
@@ -173,6 +174,44 @@ public abstract class DCELFace<TGeom extends OrientedGeometry, TVertex extends D
         }
     }
 
+    public Iterable<TVertex> iterateVertices() {
+        return () -> new Iterator<TVertex>() {
+            TDart walk = _dart;
+            boolean first = true;
+
+            @Override
+            public boolean hasNext() {
+                return first || walk != _dart;
+            }
+
+            @Override
+            public TVertex next() {
+                first = false;
+                walk = walk.getNext();
+                return walk.getOrigin();
+            }
+        };
+    }
+
+    public Iterable<TDart> iterateDarts() {
+        return () -> new Iterator<TDart>() {
+            TDart walk = _dart;
+            boolean first = true;
+
+            @Override
+            public boolean hasNext() {
+                return first || walk != _dart;
+            }
+
+            @Override
+            public TDart next() {
+                first = false;
+                walk = walk.getNext();
+                return walk;
+            }
+        };
+    }
+
     /**
      *
      * @param subtractholes
@@ -266,10 +305,10 @@ public abstract class DCELFace<TGeom extends OrientedGeometry, TVertex extends D
 
             Vector point_destination = Vector.subtract(walk._origin, point);
             point_destination.normalize();
-            
+
             assert DoubleUtil.close(point_destination.length(), 1);
             assert DoubleUtil.close(point_origin.length(), 1);
-            
+
             totalAngle += point_origin.computeSignedAngleTo(point_destination, false, false);
 
             point_origin = point_destination;
