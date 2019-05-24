@@ -118,15 +118,27 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
 
                 //System.err.println("CALL " + low + "-" + (high - 1));
                 //System.err.println("  mid: " + mid);
-
                 if (u == null || v == null) {
                     return null;
                 }
 
+//                System.err.println("u" + u.getGraphIndex());
+//                System.err.println("v" + v.getGraphIndex());
+
                 TVertex min = u.getY() <= v.getY() ? u : v;
                 // walk up to find edge on lower convex hull
-                u = shiftHull(u, v, mid, Side.LEFT);
-                v = shiftHull(v, u, mid, Side.RIGHT);
+
+                TVertex prevu;
+                TVertex prevv;
+                do {
+                    prevu = u;
+                    prevv = v;
+                    u = shiftHull(u, v, mid, Side.LEFT);
+                    v = shiftHull(v, u, mid, Side.RIGHT);
+                } while (u != prevu || v != prevv);
+
+//                System.err.println("u" + u.getGraphIndex());
+//                System.err.println("v" + v.getGraphIndex());
 
                 addEdge(u, v);
 
@@ -174,7 +186,6 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
         }
 
         //System.err.println("  adding " + u.getGraphIndex() + " " + v.getGraphIndex());
-
         _input.addEdge(u, v, _cloner.clone(new LineSegment(u.clone(), v.clone())));
         return false;
     }
@@ -322,7 +333,7 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
         return sec;
     }
 
-     private TVertex findLast(TVertex vertex, Vector dir, int mid, Side side) {
+    private TVertex findLast(TVertex vertex, Vector dir, int mid, Side side) {
 
         TVertex min = null;
         double opt = Double.POSITIVE_INFINITY;
