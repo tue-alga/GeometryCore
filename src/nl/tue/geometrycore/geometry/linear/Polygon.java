@@ -146,7 +146,7 @@ public class Polygon extends CyclicGeometry<Polygon> {
         double total = 0;
         final int n = _vertices.size();
         if (n > 1) {
-            Vector prev = _vertices.get(_vertices.size()-1);
+            Vector prev = _vertices.get(_vertices.size() - 1);
             for (int i = 0; i < n; i++) {
                 Vector next = _vertices.get(i);
                 total += prev.distanceTo(next);
@@ -345,6 +345,204 @@ public class Polygon extends CyclicGeometry<Polygon> {
         Cx = Cx / A;
         Cy = Cy / A;
         return new Vector(Cx, Cy);
+    }
+
+    @Override
+    public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
+
+        double aprec = Math.abs(prec);
+
+        switch (other.getGeometryType()) {
+            case LINE: {
+                Line line = (Line) other;
+
+                List<BaseGeometry> boundaryIntersections = intersect(other, aprec);
+
+                for (BaseGeometry g : boundaryIntersections) {
+                    // order all linesegments along line
+                    if (g.getGeometryType() == GeometryType.LINESEGMENT) {
+                        LineSegment ls = (LineSegment) g;
+                        if (Vector.dotProduct(ls.getDirection(), line.getDirection()) < 0) {
+                            ls.reverse();
+                        }
+                    }
+                }
+
+                // sort
+                boundaryIntersections.sort((g1, g2) -> {
+                    Vector p1;
+                    if (g1.getGeometryType() == GeometryType.VECTOR) {
+                        p1 = (Vector) g1;
+                    } else { // LineSegment
+                        p1 = ((LineSegment) g1).getStart();
+                    }
+                    Vector p2;
+                    if (g2.getGeometryType() == GeometryType.VECTOR) {
+                        p2 = (Vector) g2;
+                    } else { // LineSegment
+                        p2 = ((LineSegment) g2).getStart();
+                    }
+                    double d1 = Vector.dotProduct(line.getDirection(), Vector.subtract(p1, line.getThrough()));
+                    double d2 = Vector.dotProduct(line.getDirection(), Vector.subtract(p2, line.getThrough()));
+                    return Double.compare(d1, d2);
+                });
+
+                // merge
+                List<BaseGeometry> merged = new ArrayList();
+                Vector vprev = null;
+                LineSegment lsprev = null;
+                for (BaseGeometry g : boundaryIntersections) {
+                    Vector vcurr = null;
+                    LineSegment lscurr = null;
+                    if (g.getGeometryType() == GeometryType.VECTOR) {
+                        vcurr = (Vector) g;
+                    } else { // LineSegment
+                        lscurr = (LineSegment) g;
+                    }
+
+                    if (vprev != null) {
+                        if (vcurr != null) {
+                            if (vprev.isApproximately(vcurr, aprec)) {
+                                // skip over curr
+                            } else {
+                                // add prev
+                                merged.add(vprev);
+                                vprev = vcurr;
+                            }
+                        } else { // lscurr != null
+                            // NB: linesegment always replaces a vector
+                            if (lscurr.distanceTo(vprev) >= aprec) {
+                                // add prev
+                                merged.add(vprev);
+                            }
+                            lsprev = lscurr;
+                            vprev = null;
+                        }
+
+                    } else if (lsprev != null) {
+                        if (vcurr != null) {
+                            if (lsprev.distanceTo(vcurr) < aprec) {
+                                // skip vprev
+                            } else {
+                                // add prev
+                                merged.add(lsprev);
+                                lsprev = null;
+                                vprev = vcurr;
+                            }
+                        } else if (lscurr != null) {
+                            if (lsprev.getEnd().isApproximately(lscurr.getStart(), aprec)) {
+                                // join them!
+                                lsprev.setEnd(lscurr.getEnd());
+                            } else {
+                                // add prev
+                                merged.add(lsprev);
+                                lsprev = lscurr;
+                            }
+                        }
+                    } else { // very first...
+                        vprev = vcurr;
+                        lsprev = lscurr;
+                    }
+                }
+
+                if (vprev != null) {
+                    merged.add(vprev);
+                } else if (lsprev != null) {
+                    merged.add(lsprev);
+                }
+
+                // eliminate nonproper crossings & find interior                
+                Vector startAt = null;
+                for (BaseGeometry g : merged) {
+
+                    if (g.getGeometryType() == GeometryType.VECTOR) {
+                        Vector v = (Vector) g;
+
+                        boolean degenerate = false;
+
+                        for (int i = 0; i < _vertices.size(); i++) {
+                            if (_vertices.get(i).isApproximately(v, aprec)) {
+
+                                boolean prevleft = line.isLeftOf(vertex(i - 1), 0);
+                                boolean nextleft = line.isLeftOf(vertex(i + 1), 0);
+
+                                degenerate = (prevleft == nextleft);
+                                break;
+                            }
+                        }
+
+                        if (degenerate) {
+                            if (startAt == null) {
+                                if (prec >= 0) {
+                                    intersections.add(v);
+                                }
+                            } else {
+                                if (prec < 0) {
+                                    intersections.add(new LineSegment(startAt, v.clone()));
+                                    startAt = v;
+                                }
+                            }
+                        } else if (startAt == null) {
+                            startAt = v;
+                        } else {
+                            intersections.add(new LineSegment(startAt, v));
+                            startAt = null;
+                        }
+
+                    } else {
+                        LineSegment ls = (LineSegment) g;
+
+                        boolean prevleft = false;
+                        boolean nextleft = true;
+
+                        for (int i = 0; i < _vertices.size(); i++) {
+                            if (_vertices.get(i).isApproximately(ls.getStart(), aprec)) {
+                                if (ls.onBoundary(vertex(i + 1), aprec)) {
+                                    prevleft = line.isLeftOf(vertex(i - 1), 0);
+                                } else {
+                                    prevleft = line.isLeftOf(vertex(i + 1), 0);
+                                }
+
+                                break;
+                            }
+                        }
+                        for (int i = 0; i < _vertices.size(); i++) {
+                            if (_vertices.get(i).isApproximately(ls.getEnd(), aprec)) {
+                                if (ls.onBoundary(vertex(i + 1), aprec)) {
+                                    nextleft = line.isLeftOf(vertex(i - 1), 0);
+                                } else {
+                                    nextleft = line.isLeftOf(vertex(i + 1), 0);
+                                }
+                            }
+                        }
+
+                        boolean degenerate = (prevleft == nextleft);
+
+                        if (degenerate) {
+                            if (startAt == null) {
+                                if (prec >= 0) {
+                                    intersections.add(ls);
+                                }
+                            } else {
+                                if (prec < 0) {
+                                    intersections.add(new LineSegment(startAt, ls.getStart()));
+                                    startAt = ls.getEnd();
+                                }
+                            }
+                        } else if (startAt == null) {
+                            startAt = prec >= 0 ? ls.getStart() : ls.getEnd();
+                        } else {
+                            intersections.add(new LineSegment(startAt, prec >= 0 ? ls.getEnd() : ls.getStart()));
+                            startAt = null;
+                        }
+                    }
+                }
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Interior intersection not yet implemented for GeometryCycle");
+        }
+
     }
     //</editor-fold>
 

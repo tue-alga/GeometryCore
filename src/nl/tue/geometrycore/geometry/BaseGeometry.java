@@ -60,6 +60,17 @@ public abstract class BaseGeometry<TActual extends BaseGeometry> implements Geom
     }
 
     /**
+     * Compute the intersections between this and the given geometry, using a
+     * specified precision. Note that the result must be independent from the
+     * input geometry.
+     *
+     * @param other geometry with which intersection should be computed
+     * @param prec precision of the computation
+     * @param intersections list in which to store the intersection
+     */
+    public abstract void intersect(BaseGeometry other, double prec, List<BaseGeometry> intersections);
+
+    /**
      * Computes whether the provided point lies on the boundary of this
      * geometry, with a precision of DoubleUtil.EPS.
      *
@@ -98,17 +109,6 @@ public abstract class BaseGeometry<TActual extends BaseGeometry> implements Geom
      * @return closest point
      */
     public abstract Vector closestPoint(Vector point);
-
-    /**
-     * Compute the intersections between this and the given geometry, using a
-     * specified precision. Note that the result must be independent from the
-     * input geometry.
-     *
-     * @param other geometry with which intersection should be computed
-     * @param prec precision of the computation
-     * @param intersections list in which to store the intersection
-     */
-    public abstract void intersect(BaseGeometry other, double prec, List<BaseGeometry> intersections);
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

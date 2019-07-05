@@ -215,6 +215,11 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
     public boolean contains(Vector point, double prec) {
         throw new UnsupportedOperationException("NYI");
     }
+    
+    @Override
+    public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
+        throw new UnsupportedOperationException("Interior intersection not yet implemented for GeometryCycle");
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

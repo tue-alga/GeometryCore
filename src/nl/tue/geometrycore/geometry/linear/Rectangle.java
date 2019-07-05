@@ -591,6 +591,11 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
             return Math.sqrt(w * w + h * h);
         }
     }
+    
+    @Override
+    public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
+        throw new UnsupportedOperationException("Interior intersection not yet implemented for Rectangle");
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

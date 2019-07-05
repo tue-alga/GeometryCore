@@ -6,6 +6,8 @@
  */
 package nl.tue.geometrycore.geometry;
 
+import java.util.ArrayList;
+import java.util.List;
 import nl.tue.geometrycore.util.DoubleUtil;
 
 /**
@@ -63,6 +65,56 @@ public abstract class CyclicGeometry<TActual extends CyclicGeometry> extends Bas
      * @return whether the point lies inside or on the boundary
      */
     public abstract boolean contains(Vector point, double prec);
+    
+    /**
+     * Compute the intersections between this and the given geometry, using the
+     * standard precision of DoubleUtil.EPS. Note that the result must be
+     * independent from the input geometry.
+     *
+     * @param other geometry with which intersection should be computed
+     * @return list of geometries describing the intersection
+     */
+    public List<BaseGeometry> intersectInterior(BaseGeometry other) {
+        return intersectInterior(other, DoubleUtil.EPS);
+    }
+
+    /**
+     * Compute the intersections between this and the given geometry, using a
+     * specified precision. Note that the result must be independent from the
+     * input geometry.
+     *
+     * @param other geometry with which intersection should be computed
+     * @param prec precision of the computation. A negative precision excludes the boundary.
+     * @return list of geometries describing the intersection
+     */
+    public List<BaseGeometry> intersectInterior(BaseGeometry other, double prec) {
+        List<BaseGeometry> list = new ArrayList();
+        intersectInterior(other, prec, list);
+        return list;
+    }
+
+    /**
+     * Compute the intersections between this and the given geometry, using the
+     * standard precision of DoubleUtil.EPS. Note that the result must be
+     * independent from the input geometry.
+     *
+     * @param other geometry with which intersection should be computed
+     * @param intersections list in which to store the intersection
+     */
+    public void intersectInterior(BaseGeometry other, List<BaseGeometry> intersections) {
+        intersectInterior(other, DoubleUtil.EPS, intersections);
+    }
+
+    /**
+     * Compute the intersections between this and the given geometry, using a
+     * specified precision. Note that the result must be independent from the
+     * input geometry.
+     *
+     * @param other geometry with which intersection should be computed
+     * @param prec precision of the computation. A negative precision excludes the boundary.
+     * @param intersections list in which to store the intersection
+     */
+    public abstract void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections);
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
