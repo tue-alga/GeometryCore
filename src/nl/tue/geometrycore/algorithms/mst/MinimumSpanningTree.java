@@ -158,8 +158,8 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
                 VertexState nbrstate = vstates.get(neighbor.getGraphIndex());
                 boolean inqueue = nbrstate.getIndex() >= 0;
                 double w = ewi.getEdgeWeight(edge);
-                if ((inqueue && w < nbrstate.incoming_weight)
-                        || (!inqueue && Double.isInfinite(nbrstate.incoming_weight))) {
+                if (Double.isFinite(w) && ((inqueue && w < nbrstate.incoming_weight)
+                        || (!inqueue && Double.isInfinite(nbrstate.incoming_weight)))) {
                     nbrstate.incoming_edge = edge;
                     nbrstate.incoming_weight = w;
                     if (inqueue) {
