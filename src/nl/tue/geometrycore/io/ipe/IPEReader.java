@@ -612,7 +612,7 @@ public class IPEReader extends BaseReader {
         item.setAlpha(alpha);
         item.setLayer(_currentLayer);
         item.setStroke(stroke);
-        item.setSymbolsize(size * m[0][0]);
+        item.setSymbolsize(size * (m == null ? 1 : m[0][0]));
         item.setAnchor(anchor);
 
         return item;

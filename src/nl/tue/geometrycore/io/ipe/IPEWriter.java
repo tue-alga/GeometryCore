@@ -26,6 +26,7 @@ import nl.tue.geometrycore.geometry.GeometryType;
 import nl.tue.geometrycore.geometry.InfiniteGeometry;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
+import nl.tue.geometrycore.geometry.curved.BezierCurve;
 import nl.tue.geometrycore.geometry.curved.Circle;
 import nl.tue.geometrycore.geometry.curved.CircularArc;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
@@ -630,7 +631,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
                         + getLayerAttribute()
                         + getOpacityAttribute()
                         + ">"
-                       + fontSetting
+                        + fontSetting
                         + text
                         + fontSettingEnd
                         + "</text>\n");
@@ -1110,6 +1111,9 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
             case LINESEGMENT:
                 writeLineSegment((LineSegment) g, suppressmove);
                 break;
+            case BEZIERCURVE:
+                writeBezierCurve((BezierCurve) g, suppressmove);
+                break;
             case CIRCULARARC:
                 writeCircularArc((CircularArc) g, suppressmove);
                 break;
@@ -1138,19 +1142,20 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
                 // add dummy geometry, so the ipefile doesn't break
                 write("0 0 m\n 16 16 l\n");
                 break;
-            default:
             case GEOMETRYGROUP:
                 assert !suppressmove;
                 for (BaseGeometry part : ((GeometryGroup<?>) g).getParts()) {
                     writeGeometry(part, false);
                 }
                 break;
+            default:
             case VECTOR:
                 Logger.getLogger(IPEWriter.class.getName()).log(Level.SEVERE, "Unexpected geometry while writing in path tag: {0}", g.getGeometryType());
 
                 // add dummy geometry, so the ipefile doesn't break
                 write("0 0 m\n 16 16 l\n");
                 break;
+
         }
     }
 
@@ -1212,6 +1217,22 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
             } else {
                 write(r + " 0 0 " + (-r) + " " + pointToString(circularArc.getCenter()) + " " + pointToString(circularArc.getEnd()) + " a\n");
             }
+        }
+    }
+
+    private void writeBezierCurve(BezierCurve bezier, boolean suppressmove) throws IOException {
+
+        if (!suppressmove) {
+            write(pointToString(bezier.getStart()) + " m\n");
+        }
+        if (bezier.getControlpoints().size() == 2) {
+            write(pointToString(bezier.getEnd()) + " l\n");
+        } else {
+            for (int i = 1; i < bezier.getControlpoints().size() - 1; i++) {
+                Vector cp = bezier.getControlpoints().get(i);
+                write(pointToString(cp)+"\n");
+            }
+            write(pointToString(bezier.getEnd()) + " c\n");
         }
     }
 
