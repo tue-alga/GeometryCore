@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.Vector;
+import nl.tue.geometrycore.geometry.curved.BezierCurve;
 import nl.tue.geometrycore.geometry.curved.Circle;
 import nl.tue.geometrycore.geometry.curved.CircularArc;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
@@ -302,6 +303,7 @@ public class IPEReader extends BaseReader {
         Vector prev = null;
         int nummoves = 0;
         boolean closed = false;
+        boolean bezier_mode = false;
         while (!line.startsWith("</path>")) {
             if (line.endsWith("h")) {
                 // return to first
@@ -338,14 +340,6 @@ public class IPEReader extends BaseReader {
                     polyline.add(prev);
                 }
                 polyline.add(loc);
-
-//                if (polyline != null) {
-//                    //if (!polyline.get(polyline.size() - 1).close(loc)) {
-//                    polyline.add(loc);
-//                    //}
-//                } else {
-//                    complexgeos.add(new LineSegment(prev, loc));
-//                }
                 prev = loc;
             } else if (line.endsWith(" e")) {
                 if (polyline != null) {
@@ -380,38 +374,47 @@ public class IPEReader extends BaseReader {
                 polyline = null;
 
             } else if (line.endsWith(" c")) {
-                Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Encountered Bézier curve, sampling for now...");
 
-                int samples = 20;
-                if (polyline == null) {
-                    polyline = new ArrayList();
-                    polyline.add(first);
-                }
+                String[] coords = (line).split(" ");
+                Vector p = interpretPosition(coords[0], coords[1], m);
 
                 assert prev != null;
 
-                String[] coords = (line).split(" ");
-                Vector p0 = prev;
-                Vector p1 = interpretPosition(coords[0], coords[1], m);
-                Vector p2 = interpretPosition(coords[2], coords[3], m);
-                Vector p3 = interpretPosition(coords[4], coords[5], m);
-
-                for (int i = 1; i < samples - 1; i++) {
-                    double t = i / (double) (samples - 1);
-
-                    double x = (1 - t) * (1 - t) * (1 - t) * p0.getX() + 3 * (1 - t) * (1 - t) * t * p1.getX() + 3 * (1 - t) * t * t * p2.getX() + t * t * t * p3.getX();
-                    double y = (1 - t) * (1 - t) * (1 - t) * p0.getY() + 3 * (1 - t) * (1 - t) * t * p1.getY() + 3 * (1 - t) * t * t * p2.getY() + t * t * t * p3.getY();
-
-                    Vector v = new Vector(x, y);
-                    polyline.add(v);
+                if (polyline == null) {
+                    polyline = new ArrayList();
+                    polyline.add(prev);
                 }
+                polyline.add(p);
 
-                polyline.add(p3);
-
-                prev = p3;
+                if (polyline.size() == 2) {
+                    complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
+                } else {
+                    complexgeos.add(new BezierCurve(polyline));
+                }
+                polyline = null;
+                closed = false;
+                bezier_mode = false;
+                prev = p;
+                
             } else if (line.indexOf(' ', line.indexOf(' ') + 1) < 0) {
-                // point for curve
-                Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected command: \"{0}\"", line);
+                // point for curve (just one onespace on line)
+                if (!bezier_mode) {
+                    assert prev != null;
+                    bezier_mode = true;
+                    if (polyline != null) {
+                        if (polyline.size() > 2) {
+                            complexgeos.add(new PolyLine(polyline));
+                        } else if (polyline.size() == 2) {
+                            complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
+                        }
+                    }
+                    polyline = new ArrayList();
+                    polyline.add(prev);
+                }
+                String[] coords = (line).split(" ");
+                Vector p = interpretPosition(coords[0], coords[1], m);
+                polyline.add(p);
+                prev = p;
             } else {
                 Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected command: \"{0}\"", line);
             }
