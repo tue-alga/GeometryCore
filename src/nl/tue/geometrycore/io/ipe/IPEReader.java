@@ -149,7 +149,7 @@ public class IPEReader extends BaseReader {
      * @throws IOException
      */
     public void readPages(List<List<ReadItem>> pages) throws IOException {
-        readInternal(pages, -2, false);
+        readInternal(pages, -1);
     }
 
     /**
@@ -163,18 +163,17 @@ public class IPEReader extends BaseReader {
     public void read(List<ReadItem> items, int page) throws IOException {
         List<List<ReadItem>> pages = new ArrayList();
         pages.add(items);
-        readInternal(pages, page, true);
+        readInternal(pages, page >= 1 ? page : 0);
     }
 
     /**
      *
      * @param pages list of items per page to fill
-     * @param page positive number: reads only a single page; -1: read all pages
-     * into a single list; -2: read all pages into separate lists
-     * @param addToCurrent indicates whether there are already lists that are to
-     * be appended to
+     * @param page positive number: reads only a single page (list is already in
+     * pages list); 0: read all pages into a single list (which is already in
+     * the pages list); -1: read all pages into separate lists be appended to
      */
-    private void readInternal(List<List<ReadItem>> pages, int page, boolean addToCurrent) throws IOException {
+    private void readInternal(List<List<ReadItem>> pages, int page) throws IOException {
 
         _currentLayer = "default";
 
@@ -207,27 +206,19 @@ public class IPEReader extends BaseReader {
             _namedColors.put("white", Color.white);
         }
 
-        List<ReadItem> items = null;
+        List<ReadItem> items = page >= 0 ? pages.get(0) : null;
 
         while (line != null) {
 
             if (line.startsWith("<page")) {
                 pageNumber++;
-                if (addToCurrent) {
-                    if (pageNumber - 1 >= pages.size()) {
-                        items = new ArrayList();
-                        pages.add(items);
-                    } else {
-                        items = pages.get(pageNumber - 1);
-                    }
-                } else {
+                if (page == -1) {
                     items = new ArrayList();
                     pages.add(items);
                 }
                 onpage = true;
             } else if (line.startsWith("</page")) {
                 onpage = false;
-                items = null;
             } else if (line.startsWith("<ipestyle")) {
                 instyle = true;
             } else if (line.startsWith("</ipestyle")) {
