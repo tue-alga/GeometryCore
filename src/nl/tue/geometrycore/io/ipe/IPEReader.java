@@ -54,7 +54,6 @@ public class IPEReader extends BaseReader {
     private Map<String, Dashing> _namedDashing;
     private Rectangle _pagebounds = IPEWriter.getA4Size();
     private final BufferedReader _source;
-    private List<ReadItem> _items;
     private String _currentLayer;
     //</editor-fold>
 
@@ -115,8 +114,8 @@ public class IPEReader extends BaseReader {
      * Reads only the items from a specific page. First page is numbered 1. Any
      * value below 1 will result in all pages being read.
      *
-     * @param items
      * @param page
+     * @return
      * @throws IOException
      */
     public List<ReadItem> read(int page) throws IOException {
@@ -131,6 +130,29 @@ public class IPEReader extends BaseReader {
     }
 
     /**
+     * Reads all items, each list representing a single page in the file.
+     *
+     * @return
+     * @throws IOException
+     */
+    public List<List<ReadItem>> readPages() throws IOException {
+        List<List<ReadItem>> pages = new ArrayList();
+        readPages(pages);
+        return pages;
+    }
+
+    /**
+     * Reads all items, each list representing a single page in the file. If the
+     * provided list is not empty, each page is appended after the current lists
+     *
+     * @param pages
+     * @throws IOException
+     */
+    public void readPages(List<List<ReadItem>> pages) throws IOException {
+        readInternal(pages, -2, false);
+    }
+
+    /**
      * Reads only the items from a specific page. First page is numbered 1. Any
      * value below 1 will result in all pages being read.
      *
@@ -139,9 +161,22 @@ public class IPEReader extends BaseReader {
      * @throws IOException
      */
     public void read(List<ReadItem> items, int page) throws IOException {
+        List<List<ReadItem>> pages = new ArrayList();
+        pages.add(items);
+        readInternal(pages, page, true);
+    }
+
+    /**
+     *
+     * @param pages list of items per page to fill
+     * @param page positive number: reads only a single page; -1: read all pages
+     * into a single list; -2: read all pages into separate lists
+     * @param addToCurrent indicates whether there are already lists that are to
+     * be appended to
+     */
+    private void readInternal(List<List<ReadItem>> pages, int page, boolean addToCurrent) throws IOException {
 
         _currentLayer = "default";
-        _items = items;
 
         String line = _source.readLine();
 
@@ -172,13 +207,27 @@ public class IPEReader extends BaseReader {
             _namedColors.put("white", Color.white);
         }
 
+        List<ReadItem> items = null;
+
         while (line != null) {
 
             if (line.startsWith("<page")) {
                 pageNumber++;
+                if (addToCurrent) {
+                    if (pageNumber - 1 >= pages.size()) {
+                        items = new ArrayList();
+                        pages.add(items);
+                    } else {
+                        items = pages.get(pageNumber - 1);
+                    }
+                } else {
+                    items = new ArrayList();
+                    pages.add(items);
+                }
                 onpage = true;
             } else if (line.startsWith("</page")) {
                 onpage = false;
+                items = null;
             } else if (line.startsWith("<ipestyle")) {
                 instyle = true;
             } else if (line.startsWith("</ipestyle")) {
@@ -188,19 +237,19 @@ public class IPEReader extends BaseReader {
                 if (line.startsWith("<path")) {
                     ReadItem item = readPath(line);
                     item.setPageNumber(pageNumber);
-                    _items.add(item);
+                    items.add(item);
                 } else if (line.startsWith("<use") && line.contains("name=\"mark")) {
                     ReadItem item = readMark(line);
                     item.setPageNumber(pageNumber);
-                    _items.add(item);
+                    items.add(item);
                 } else if (line.startsWith("<group")) {
                     ReadItem item = readGroup(line);
                     item.setPageNumber(pageNumber);
-                    _items.add(item);
+                    items.add(item);
                 } else if (line.startsWith("<text")) {
                     ReadItem item = readText(line);
                     item.setPageNumber(pageNumber);
-                    _items.add(item);
+                    items.add(item);
                 }
             } else if (instyle) {
 
@@ -395,7 +444,7 @@ public class IPEReader extends BaseReader {
                 closed = false;
                 bezier_mode = false;
                 prev = p;
-                
+
             } else if (line.indexOf(' ', line.indexOf(' ') + 1) < 0) {
                 // point for curve (just one onespace on line)
                 if (!bezier_mode) {
