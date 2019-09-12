@@ -15,10 +15,6 @@ import nl.tue.geometrycore.geometry.Vector;
  */
 public class LexicographicOrder<TVector extends Vector> implements Comparator<TVector> {
 
-    public enum AxisOrder {
-        X_Y, Y_X
-    }
-
     public enum Order {
         X_INC_Y_INC,
         X_INC_Y_DEC,
