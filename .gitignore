@@ -1,0 +1,9 @@
+# Java and Netbeans related stuff
+*.backup
+*.class
+**/build/
+**/nbproject/
+*nbbuild.xml
+*build.xml
+*manifest.mf
+**/dist/
