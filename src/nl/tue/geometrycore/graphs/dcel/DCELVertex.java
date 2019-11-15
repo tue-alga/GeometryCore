@@ -6,6 +6,7 @@
  */
 package nl.tue.geometrycore.graphs.dcel;
 
+import java.util.Iterator;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
 
@@ -31,8 +32,7 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
         _marked = false;
         _graphIndex = -1;
     }
-    
-    
+
     public int getGraphIndex() {
         return _graphIndex;
     }
@@ -73,43 +73,44 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
 
     @Override
     public void rotate90DegreesCounterclockwise() {
-        super.rotate90DegreesCounterclockwise(); 
+        super.rotate90DegreesCounterclockwise();
         updateIncidentEdges();
     }
 
     @Override
     public void rotate90DegreesClockwise() {
-        super.rotate90DegreesClockwise(); 
+        super.rotate90DegreesClockwise();
         updateIncidentEdges();
     }
 
     @Override
     public void invert() {
-        super.invert(); 
+        super.invert();
         updateIncidentEdges();
     }
 
     @Override
-    public void normalize() {
-        super.normalize(); 
+    public double normalize() {
+        double len = super.normalize();
         updateIncidentEdges();
+        return len;
     }
 
     @Override
     public void scale(double factorX, double factorY) {
-        super.scale(factorX, factorY); 
+        super.scale(factorX, factorY);
         updateIncidentEdges();
     }
 
     @Override
     public void rotate(double counterclockwiseangle) {
-        super.rotate(counterclockwiseangle); 
+        super.rotate(counterclockwiseangle);
         updateIncidentEdges();
     }
 
     @Override
     public void translate(double deltaX, double deltaY) {
-        super.translate(deltaX, deltaY); 
+        super.translate(deltaX, deltaY);
         updateIncidentEdges();
     }
 
@@ -138,9 +139,92 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
     }
 
     /**
+     * Convenience method to iterate over all neighboring vertices in O(d) time.
+     *
+     * @return iterable over the neighboring vertices
+     */
+    public Iterable<TVertex> neighbors() {
+        return () -> new Iterator() {
+
+            TDart walk = _dart;
+
+            @Override
+            public boolean hasNext() {
+                return walk != null;
+            }
+
+            @Override
+            public TVertex next() {
+                TVertex v = walk.getDestination();
+                walk = walk.getTwin().getNext();
+                if (walk == _dart) {
+                    walk = null;
+                }
+                return v;
+            }
+        };
+    }
+
+    /**
+     * Convenience method to iterate over all outgoing darts in O(d) time.
+     *
+     * @return iterable over the outgoing darts
+     */
+    public Iterable<TDart> darts() {
+        return () -> new Iterator() {
+
+            TDart walk = _dart;
+
+            @Override
+            public boolean hasNext() {
+                return walk != null;
+            }
+
+            @Override
+            public TDart next() {
+                TDart d = walk;
+                walk = walk.getTwin().getNext();
+                if (walk == _dart) {
+                    walk = null;
+                }
+                return d;
+            }
+        };
+    }
+
+    /**
+     * Convenience method to iterate over all incident faces in O(d) time. Note
+     * that faces may be repeated in case there are multiple outgoing darts that
+     * are incident to the same face
+     *
+     * @return iterable over the incident faces
+     */
+    public Iterable<TFace> faces() {
+        return () -> new Iterator() {
+
+            TDart walk = _dart;
+
+            @Override
+            public boolean hasNext() {
+                return walk != null;
+            }
+
+            @Override
+            public TFace next() {
+                TFace f = walk._face;
+                walk = walk.getTwin().getNext();
+                if (walk == _dart) {
+                    walk = null;
+                }
+                return f;
+            }
+        };
+    }
+
+    /**
      * O(d)-time where d is the degree of the vertex.
-     * 
-     * @return 
+     *
+     * @return the degree of the node
      */
     public int getDegree() {
         int deg = 0;
@@ -155,9 +239,9 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
     }
 
     /**
-     * O(k)-time.
-     * 
-     * @return 
+     * O(min(d,k))-time where d is the degree of the vertex.
+     *
+     * @return true iff the degree is k
      */
     public boolean isDegree(int k) {
         int deg = 0;
@@ -175,9 +259,9 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
     }
 
     /**
-     * O(k)-time
-     * 
-     * @return 
+     * O(min(d,k))-time where d is the degree of the vertex.
+     *
+     * @return true iff the degree is <= k
      */
     public boolean isAtMostDegree(int k) {
         int deg = 0;
@@ -196,9 +280,9 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
     }
 
     /**
-     * O(k)-time
-     * 
-     * @return 
+     * O(min(d,k))-time where d is the degree of the vertex.
+     *
+     * @return true iff the degree is >= k
      */
     public boolean isAtLeastDegree(int k) {
         int deg = 0;
