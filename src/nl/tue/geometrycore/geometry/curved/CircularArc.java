@@ -127,6 +127,19 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
             return null;
         }
     }
+
+    public static CircularArc bySagitta(Vector start, Vector end, double sagitta, boolean counterclockwise) {
+        Vector dir = Vector.subtract(end, start);
+        dir.normalize();
+        dir.scale(sagitta);
+        if (counterclockwise) {
+            dir.rotate90DegreesClockwise();
+        } else {
+            dir.rotate90DegreesCounterclockwise();
+        }
+        Vector mid = Vector.add(dir, Vector.multiply(0.5, Vector.add(start, end)));
+        return byThroughPoint(start, mid, end);
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="GET & SET">

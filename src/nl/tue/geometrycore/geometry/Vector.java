@@ -323,7 +323,7 @@ public class Vector extends BaseGeometry<Vector> {
 
     /**
      * Scales this Vector to have length 1.
-     * @return The old length of the vector 
+     * @return the length of the vector prior to normalization
      */
     public double normalize() {
         final double len = Math.sqrt(_x * _x + _y * _y);
