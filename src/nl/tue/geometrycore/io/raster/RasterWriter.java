@@ -44,6 +44,7 @@ import nl.tue.geometrycore.geometryrendering.styling.FontStyle;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
 import nl.tue.geometrycore.geometryrendering.styling.TextAnchor;
 import nl.tue.geometrycore.io.BaseWriter;
+import nl.tue.geometrycore.util.Pair;
 
 /**
  * Provides a renderer based on the Java2D graphics library. Can be used to
@@ -515,10 +516,10 @@ public class RasterWriter extends BaseWriter<BufferedImage, Graphics2D> {
             _graphics.clip(shape);
             _graphics.setColor(_fillcolor);
 
-            List<LineSegment> hashures = _hash.computeHashures(geom, size(1));
-
-            int pi = 0;
-            for (LineSegment hashure : hashures) {
+            Pair<List<LineSegment>,Integer> hashures = _hash.computeHashures(geom, size(1));
+            
+            int pi = hashures.getSecond();
+            for (LineSegment hashure : hashures.getFirst()) {
                 _graphics.setStroke(getUndashedStroke(_hash.getPattern()[pi]));
                 _graphics.draw(new Line2D.Double(
                         hashure.getStart().getX(), hashure.getStart().getY(),

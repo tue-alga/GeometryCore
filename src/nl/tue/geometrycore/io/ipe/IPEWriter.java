@@ -44,6 +44,7 @@ import nl.tue.geometrycore.io.BaseWriter;
 import nl.tue.geometrycore.io.LayeredWriter;
 import nl.tue.geometrycore.util.ClipboardUtil;
 import nl.tue.geometrycore.util.DoubleUtil;
+import nl.tue.geometrycore.util.Pair;
 
 /**
  * Writer for the IPE XML format. It can handle both files as well as selection
@@ -765,11 +766,11 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
     }
 
     private void renderHashure(BaseGeometry geom) throws IOException {
-        List<LineSegment> hashures = _hash.computeHashures(geom, size(1, true));
+        Pair<List<LineSegment>,Integer> hashures = _hash.computeHashures(geom, size(1, true));
 
         startGroup(geom);
-        int pi = 0;
-        for (LineSegment hashure : hashures) {
+        int pi = hashures.getSecond();
+        for (LineSegment hashure : hashures.getFirst()) {
             writeHashureStart(_hash.getPattern()[pi]);
             writeLineSegment(hashure, false);
             writeHashureEnd();
