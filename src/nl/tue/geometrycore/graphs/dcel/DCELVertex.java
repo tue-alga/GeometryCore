@@ -90,9 +90,10 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
     }
 
     @Override
-    public void normalize() {
-        super.normalize(); 
+    public double normalize() {
+        double len = super.normalize(); 
         updateIncidentEdges();
+        return len;
     }
 
     @Override

@@ -104,9 +104,10 @@ public abstract class SimpleVertex<TGeom extends OrientedGeometry<TGeom>, TVerte
     }
 
     @Override
-    public void normalize() {
-        super.normalize(); 
+    public double normalize() {
+        double len = super.normalize(); 
         updateIncidentEdges();
+        return len;
     }
 
     @Override
