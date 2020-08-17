@@ -55,6 +55,7 @@ public class IPEReader extends BaseReader {
     private Rectangle _pagebounds = IPEWriter.getA4Size();
     private final BufferedReader _source;
     private String _currentLayer;
+    private int _bezierSampling = -1;
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
@@ -289,6 +290,23 @@ public class IPEReader extends BaseReader {
         return _pagebounds;
     }
 
+    public int getBezierSampling() {
+        return _bezierSampling;
+    }
+
+    /**
+     * Set to -1 (default) to simply read Bezier curves. To sample, Bezier
+     * curves into polylines, set this to a nonnegative value, indicating the
+     * number of intermediate samples. E.g., setting it to zero turns each
+     * Bezier Curve into a line segment between its first and last control
+     * point.
+     *
+     * @param bezierSampling
+     */
+    public void setBezierSampling(int bezierSampling) {
+        _bezierSampling = bezierSampling;
+    }
+
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">    
     /**
@@ -343,7 +361,7 @@ public class IPEReader extends BaseReader {
         Vector prev = null;
         int nummoves = 0;
         boolean closed = false;
-        boolean bezier_mode = false;
+        int bezier_mode = 0; // 0: no bezier; 1: fresh bezier; 2: bezier that can be appended to previous
         while (!line.startsWith("</path>")) {
             if (line.endsWith("h")) {
                 // return to first
@@ -426,26 +444,53 @@ public class IPEReader extends BaseReader {
                 }
                 polyline.add(p);
 
-                if (polyline.size() == 2) {
-                    complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
+                if (_bezierSampling < 0) {
+                    if (polyline.size() == 2) {
+                        complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
+                    } else {
+                        complexgeos.add(new BezierCurve(polyline));
+                    }
+                    polyline = null;
                 } else {
-                    complexgeos.add(new BezierCurve(polyline));
+                    BezierCurve bc = new BezierCurve(polyline);
+                    List<Vector> vs = new ArrayList();
+                    if (bezier_mode == 1) {
+                        vs.add(bc.getStart());
+                    }
+                    for (int i = 1; i <= _bezierSampling; i++) {
+                        double t = i / (double) (_bezierSampling + 1);
+                        vs.add(bc.getPointAt(t));
+                    }
+                    vs.add(bc.getEnd());
+                    if (bezier_mode == 1) {
+                        polyline = vs;
+                    } else if (complexgeos.get(complexgeos.size() - 1) instanceof PolyLine) {
+                        polyline = ((PolyLine) complexgeos.remove(complexgeos.size() - 1)).vertices();
+                        polyline.addAll(vs);
+                    } else {
+                        LineSegment ls = (LineSegment) complexgeos.remove(complexgeos.size() - 1);
+                        polyline = vs;
+                        polyline.add(0, ls.getStart());
+                        polyline.add(1, ls.getEnd());
+
+                    }
                 }
-                polyline = null;
                 closed = false;
-                bezier_mode = false;
+                bezier_mode = 0;
                 prev = p;
 
             } else if (line.indexOf(' ', line.indexOf(' ') + 1) < 0) {
                 // point for curve (just one onespace on line)
-                if (!bezier_mode) {
+                if (bezier_mode == 0) {
                     assert prev != null;
-                    bezier_mode = true;
+                    bezier_mode = 1;
                     if (polyline != null) {
                         if (polyline.size() > 2) {
                             complexgeos.add(new PolyLine(polyline));
+                            bezier_mode = 2;
                         } else if (polyline.size() == 2) {
                             complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
+                            bezier_mode = 2;
                         }
                     }
                     polyline = new ArrayList();
@@ -698,8 +743,13 @@ public class IPEReader extends BaseReader {
             for (BaseGeometry part : g.edges()) {
                 applyMatrixToGeometry(part, matrix);
             }
+        } else if (geometry instanceof BezierCurve) {
+            BezierCurve bc = (BezierCurve) geometry;
+            for (Vector v : bc.getControlpoints()) {
+                applyMatrixToGeometry(v, matrix);
+            }
         } else {
-            Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected type in IPERead: {0}", geometry.getClass().getName());
+            Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected type in IPEReader: {0}", geometry.getClass().getName());
         }
     }
 
