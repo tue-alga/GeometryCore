@@ -44,6 +44,7 @@ import nl.tue.geometrycore.io.BaseWriter;
 import nl.tue.geometrycore.io.LayeredWriter;
 import nl.tue.geometrycore.util.ClipboardUtil;
 import nl.tue.geometrycore.util.DoubleUtil;
+import nl.tue.geometrycore.util.Pair;
 
 /**
  * Writer for the IPE XML format. It can handle both files as well as selection
@@ -463,6 +464,10 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
 
     @Override
     public void initialize() throws IOException {
+        initialize(null);
+    }
+
+    public void initialize(String latexPreamble) throws IOException {
 
         // initialize defaults, unless specified
         if (_namedColors == null) {
@@ -496,6 +501,9 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
                     + "<layout paper=\"" + _view.width() + " " + _view.height()
                     + "\" origin=\"0 0\" frame=\"" + _view.width() + " " + _view.height() + "\"/>\n");
 
+            if (latexPreamble != null) {
+                write("<preamble>" + latexPreamble + "</preamble>\n");
+            }
             for (Entry<String, Color> entry : _namedColors.entrySet()) {
                 write("<color name=\"" + entry.getKey() + "\" value=\"" + colorToString(entry.getValue()) + "\"/>\n");
             }
@@ -765,11 +773,11 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
     }
 
     private void renderHashure(BaseGeometry geom) throws IOException {
-        List<LineSegment> hashures = _hash.computeHashures(geom, size(1, true));
+        Pair<List<LineSegment>, Integer> hashures = _hash.computeHashures(geom, size(1, true));
 
         startGroup(geom);
-        int pi = 0;
-        for (LineSegment hashure : hashures) {
+        int pi = hashures.getSecond();
+        for (LineSegment hashure : hashures.getFirst()) {
             writeHashureStart(_hash.getPattern()[pi]);
             writeLineSegment(hashure, false);
             writeHashureEnd();
@@ -1230,7 +1238,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
         } else {
             for (int i = 1; i < bezier.getControlpoints().size() - 1; i++) {
                 Vector cp = bezier.getControlpoints().get(i);
-                write(pointToString(cp)+"\n");
+                write(pointToString(cp) + "\n");
             }
             write(pointToString(bezier.getEnd()) + " c\n");
         }

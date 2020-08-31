@@ -172,7 +172,7 @@ public class SVGReader extends BaseReader {
 
     private Map<String, String> readAuxiliary(String line, String... ignore) {
         Map<String, String> aux = new HashMap();
-
+        
         // trim the opening <tag-name and the closing >
         if (line.indexOf(" ") >= 0) {
             line = line.substring(line.indexOf(" "), line.length() - 1).trim();
@@ -756,8 +756,18 @@ public class SVGReader extends BaseReader {
                 {Double.parseDouble(split[0]), Double.parseDouble(split[2]), Double.parseDouble(split[4])},
                 {Double.parseDouble(split[1]), Double.parseDouble(split[3]), Double.parseDouble(split[5])}
             };
+        } if (attr.startsWith("translate")) {
+            attr = attr.substring(attr.indexOf("(") + 1);
+            attr = attr.substring(0, attr.indexOf(")"));
+
+            String[] split = attr.split(",");
+
+            return new double[][]{
+                {1,0, Double.parseDouble(split[0])},
+                {0,1, Double.parseDouble(split[1])}
+            };
         } else {
-            Logger.getLogger(SVGReader.class.getName()).log(Level.SEVERE, "Unexpected transformation: '{0}'", attr);
+            Logger.getLogger(SVGReader.class.getName()).log(Level.SEVERE, "Unexpected transformation: ''{0}''", attr);
             return null;
         }
     }

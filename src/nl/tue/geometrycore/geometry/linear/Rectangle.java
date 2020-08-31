@@ -591,7 +591,7 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
             return Math.sqrt(w * w + h * h);
         }
     }
-    
+
     @Override
     public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
         throw new UnsupportedOperationException("Interior intersection not yet implemented for Rectangle");
@@ -616,7 +616,10 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
      * @param newwidth the desired width of the rectangle
      */
     public void setWidth(double newwidth) {
-        if (isEmpty()) {
+        if (newwidth < 0) {
+            _left = Double.POSITIVE_INFINITY;
+            _right = Double.NEGATIVE_INFINITY;
+        } else if (isEmpty()) {
             _left = -newwidth / 2.0;
             _right = newwidth / 2.0;
         } else {
@@ -639,7 +642,10 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
      * @param newheight the desired height of the rectangle
      */
     public void setHeight(double newheight) {
-        if (isEmpty()) {
+        if (newheight < 0) {
+            _bottom = Double.POSITIVE_INFINITY;
+            _top = Double.NEGATIVE_INFINITY;
+        } else if (isEmpty()) {
             _bottom = -newheight / 2.0;
             _top = newheight / 2.0;
         } else {
