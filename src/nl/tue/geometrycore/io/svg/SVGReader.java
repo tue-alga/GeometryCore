@@ -48,6 +48,7 @@ public class SVGReader extends BaseReader {
     private final BufferedReader _source;
     private List<ReadItem> _items;
     private Rectangle _viewbox = null;
+    private boolean _decomposeGroups = false;
 
     private SVGReader(BufferedReader source) {
         _source = source;
@@ -66,12 +67,19 @@ public class SVGReader extends BaseReader {
     }
 
     // -------------------------------------------------------------------------
+    // SETTINGS
+    // -------------------------------------------------------------------------
+    public void setDecomposeGroups(boolean decomposeGroups) {
+        _decomposeGroups = decomposeGroups;
+    }
+
+    // -------------------------------------------------------------------------
     // IMPLEMENTATIONS OF BASE CLASS
     // -------------------------------------------------------------------------
     public Rectangle getViewBox() {
         return _viewbox;
     }
-    
+
     @Override
     public void close() throws IOException {
         _source.close();
@@ -109,7 +117,7 @@ public class SVGReader extends BaseReader {
                     ReadItem item = readPolyline(line);
                     _items.add(item);
                 } else if (line.startsWith("<rect")) {
-                    ReadItem item = readRect(line);
+                   ReadItem item = readRect(line);
                     _items.add(item);
                 } else if (line.startsWith("<circle")) {
                     ReadItem item = readCircle(line);
@@ -117,8 +125,7 @@ public class SVGReader extends BaseReader {
                 } else if (line.startsWith("<use")) {
                     // TODO
                 } else if (line.startsWith("<g")) {
-                    ReadItem item = readGroup(line);
-                    _items.add(item);
+                    _items.addAll(readGroup(line));
                 }
             } else {
                 // in style
@@ -134,15 +141,15 @@ public class SVGReader extends BaseReader {
     private void readViewBox(String line) {
         String box = readAttribute(line, "viewBox");
         String[] split = box.split(" ");
-        
+
         double left = Double.parseDouble(split[0]);
         double top = Double.parseDouble(split[1]);
         double width = Double.parseDouble(split[2]);
         double height = Double.parseDouble(split[3]);
-        
-        _viewbox = Rectangle.byCornerAndSize(new Vector(left,top), width, -height);
+
+        _viewbox = Rectangle.byCornerAndSize(new Vector(left, top), width, -height);
     }
-    
+
     /**
      * Reads the value of a given XML attribute in a given line.
      *
@@ -167,8 +174,12 @@ public class SVGReader extends BaseReader {
         Map<String, String> aux = new HashMap();
 
         // trim the opening <tag-name and the closing >
-        line = line.substring(line.indexOf(" "), line.length() - 1).trim();
-
+        if (line.indexOf(" ") >= 0) {
+            line = line.substring(line.indexOf(" "), line.length() - 1).trim();
+        } else {
+            line = "";
+        }
+        
         while (line.length() > 0) {
             int eq = line.indexOf("=");
 
@@ -213,7 +224,10 @@ public class SVGReader extends BaseReader {
         } else {
             String value = style.substring(index);
             value = value.substring(value.indexOf(":") + 1);
-            value = value.substring(0, value.indexOf(";"));
+            int ix = value.indexOf(";");
+            if (ix >= 0) {
+                value = value.substring(0, ix);
+            }
             return value.trim();
         }
     }
@@ -479,81 +493,85 @@ public class SVGReader extends BaseReader {
      * the group
      * @throws IOException
      */
-    private ReadItem readGroup(String line) throws IOException {
+    private List<ReadItem> readGroup(String line) throws IOException {
 
         double[][] m = interpretMatrix(readAttribute(line, "transform"));
 
-        List<BaseGeometry> parts = new ArrayList();
-
-        Color stroke = null;
-        Color fill = null;
-        double strokewidth = -1;
-        double size = -1;
-        Dashing dash = null;
-        double alpha = -1;
+        List<ReadItem> parts = new ArrayList();
 
         Map<String, String> aux = readAuxiliary(line, "transform");
 
         line = _source.readLine();
 
         while (!line.startsWith("</g")) {
-            ReadItem item = null;
+            int oldSize = parts.size();
             if (line.startsWith("<path")) {
-                item = readPath(line);
+                parts.add(readPath(line));
             } else if (line.startsWith("<polyline")) {
-                item = readPolyline(line);
+                parts.add(readPolyline(line));
             } else if (line.startsWith("<rect")) {
-                item = readRect(line);
+                parts.add(readRect(line));
             } else if (line.startsWith("<circle")) {
-                item = readCircle(line);
+                parts.add(readCircle(line));
             } else if (line.startsWith("<use")) {
                 // TODO
             } else if (line.startsWith("<g")) {
-                item = readGroup(line);
+                parts.addAll(readGroup(line));
             }
 
-            if (item != null) {
-                BaseGeometry geo = item.getGeometry();
-                applyMatrixToGeometry(geo, m);
-                parts.add(geo);
+            for (int i = oldSize; i < parts.size(); i++) {
+                applyMatrixToGeometry(parts.get(i).getGeometry(), m);
+            }
 
-                stroke = item.getStroke();
-                fill = item.getFill();
-                strokewidth = item.getStrokewidth();
-                size = item.getSymbolsize();
-                dash = item.getDash();
-                alpha = item.getAlpha();
+            if (!_decomposeGroups) {
+                ReadItem newitem = new ReadItem();
+                newitem.setLayer(null);
+                GeometryGroup grp = new GeometryGroup();
+                newitem.setGeometry(grp);
+                Color stroke = null;
+                Color fill = null;
+                double strokewidth = -1;
+                double size = -1;
+                Dashing dash = null;
+                double alpha = -1;
+                for (int i = oldSize; i < parts.size(); i++) {
+                    ReadItem item = parts.get(i);
+                    grp.getParts().add(item.getGeometry());
+                    stroke = item.getStroke();
+                    fill = item.getFill();
+                    strokewidth = item.getStrokewidth();
+                    size = item.getSymbolsize();
+                    dash = item.getDash();
+                    alpha = item.getAlpha();
+                }
+                parts.clear();
+                parts.add(newitem);
+
+                if (alpha >= 0) {
+                    newitem.setAlpha(alpha);
+                }
+                if (dash != null) {
+                    newitem.setDash(dash);
+                }
+                if (fill != null) {
+                    newitem.setFill(fill);
+                }
+                if (stroke != null) {
+                    newitem.setStroke(stroke);
+                }
+                if (strokewidth >= 0) {
+                    newitem.setStrokewidth(strokewidth);
+                }
+                if (size >= 0) {
+                    newitem.setSymbolsize(size);
+                }
+                newitem.setAuxiliary(aux);
             }
 
             line = _source.readLine();
         }
 
-        ReadItem item = new ReadItem();
-
-        item.setLayer(null);
-        item.setGeometry(new GeometryGroup(parts));
-
-        if (alpha >= 0) {
-            item.setAlpha(alpha);
-        }
-        if (dash != null) {
-            item.setDash(dash);
-        }
-        if (fill != null) {
-            item.setFill(fill);
-        }
-        if (stroke != null) {
-            item.setStroke(stroke);
-        }
-        if (strokewidth >= 0) {
-            item.setStrokewidth(strokewidth);
-        }
-        if (size >= 0) {
-            item.setSymbolsize(size);
-        }
-        item.setAuxiliary(aux);
-
-        return item;
+        return parts;
     }
 
     private void applyMatrixToGeometry(BaseGeometry geometry, double[][] matrix) {
