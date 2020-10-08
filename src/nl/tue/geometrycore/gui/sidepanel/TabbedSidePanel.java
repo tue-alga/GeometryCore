@@ -10,6 +10,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
@@ -136,7 +137,23 @@ public class TabbedSidePanel extends JPanel {
         _tabs.add(tab);
         return tab;
     }
-    
+
+    /**
+     * Adds a tab with a single dropdown menu for the given items, which updates
+     * its remainder based on the selected item.
+     */
+    public <TItem extends ComboTabItem> ComboTab<TItem> addComboTab(String name, NewValueListener<ItemEvent,TItem> listener, TItem selected, TItem... items) {
+        ComboTab tab = new ComboTab(name, this, items, selected, listener);
+        
+        JScrollPane scroll = new JScrollPane(tab._panel);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        _tabpane.add(name, scroll);
+        _tabs.add(tab);
+        return tab;
+    }
+
     public void resizeTabs() {
         for (SideTab tab : _tabs) {
             tab.resizeTab();

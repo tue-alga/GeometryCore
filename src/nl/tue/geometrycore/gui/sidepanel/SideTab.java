@@ -6,13 +6,18 @@
  */
 package nl.tue.geometrycore.gui.sidepanel;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Stack;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -21,10 +26,12 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 
@@ -52,7 +59,7 @@ public class SideTab {
     JPanel _panel;
     private int _maxElementWidth;
     private int _y;
-    private Stack<Addition> _additions;
+    Stack<Addition> _additions;
     private LinkedList<SplitSpec> _splits;
     //</editor-fold>
 
@@ -237,8 +244,45 @@ public class SideTab {
         return label;
     }
 
+    public JLabel addStaticText(String text, int rows) {
+
+        JLabel label = new JLabel("<html><body width=" + (_maxElementWidth - 2) + ">" + text + "</body></html>");
+        label.setVerticalAlignment(JLabel.TOP);
+        label.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+
+        JScrollPane scroll = new JScrollPane(label);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        addComponent(scroll, rows * _partof._elementHeight);
+
+        return label;
+    }
+
     public JTextField addTextField(String text) {
         JTextField field = new JTextField(text);
+        addComponent(field);
+        return field;
+    }
+
+    public JTextField addTextField(String text, NewValueListener<KeyEvent, String> nv) {
+        JTextField field = new JTextField(text);
+        field.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                nv.update(e, field.getText());
+            }
+        });
         addComponent(field);
         return field;
     }
@@ -254,7 +298,7 @@ public class SideTab {
         return button;
     }
 
-    public JCheckBox addCheckbox(String text, boolean checked, NewValueListener<ActionEvent,Boolean> action) {
+    public JCheckBox addCheckbox(String text, boolean checked, NewValueListener<ActionEvent, Boolean> action) {
         JCheckBox check = new JCheckBox(text, checked);
         addComponent(check);
         if (action != null) {
@@ -334,6 +378,20 @@ public class SideTab {
             });
         }
         return box;
+    }
+
+    public <T> JRadioButton[] addRadioButtonList(T[] objects, T selected, NewValueListener<ActionEvent, T> list) {
+
+        JRadioButton[] buttons = new JRadioButton[objects.length];
+
+        ButtonGroup grp = addButtonGroup();
+        for (int i = 0; i < buttons.length; i++) {
+            final T obj = objects[i];
+            buttons[i] = addRadioButton(obj.toString(), obj == selected, grp, list == null ? null : (e) -> {              
+                list.update(e, obj);
+            });
+        }
+        return buttons;
     }
     //</editor-fold>
 
