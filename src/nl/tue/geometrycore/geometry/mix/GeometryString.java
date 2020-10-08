@@ -247,6 +247,27 @@ public class GeometryString<TEdge extends OrientedGeometry<TEdge>> extends Orien
         }
         return len;
     }
+    
+    @Override
+    public Vector getPointAt(double fraction) {
+        final int n = _edges.size();
+        switch (n) {
+            case 0:
+                return null;
+            default:
+                double dist = fraction * perimeter();
+                for (TEdge edge : _edges) {
+                    double d = edge.perimeter();
+                    if (d < dist) {
+                        dist -= d;
+                    } else {
+                        double f = d / dist;
+                        return edge.getPointAt(f);
+                    }              
+                }   
+                return _edges.get(n-1).getEnd();
+        }
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

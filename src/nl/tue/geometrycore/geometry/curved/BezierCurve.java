@@ -162,5 +162,4 @@ public class BezierCurve extends ParameterizedCurve<BezierCurve> {
 
         return point;
     }
-
 }

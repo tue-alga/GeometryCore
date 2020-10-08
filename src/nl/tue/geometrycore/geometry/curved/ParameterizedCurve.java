@@ -23,8 +23,6 @@ public abstract class ParameterizedCurve<TActual extends ParameterizedCurve> ext
     
     public abstract double getMaximumParameter();
     
-     public abstract Vector getPointAt(double t);
-
     public PolyLine getApproximation(int points) {
         List<Vector> vs = new ArrayList(points);
 

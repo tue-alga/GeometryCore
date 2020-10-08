@@ -313,6 +313,32 @@ public class PolyLine extends OrientedGeometry<PolyLine> {
             }
         };
     }
+
+    @Override
+    public Vector getPointAt(double fraction) {
+        final int n = _vertices.size();
+        switch (n) {
+            case 0:
+                return null;
+            case 1:
+                return _vertices.get(0);
+            default:
+                double dist = fraction * perimeter();
+                Vector prev = _vertices.get(0);
+                for (int i = 1; i < n; i++) {
+                    Vector next = _vertices.get(i);
+                    double d = prev.distanceTo(next);
+                    if (d < dist) {
+                        dist -= d;
+                    } else {
+                        double f = dist / d;
+                        return Vector.add(Vector.multiply((1-f), prev), Vector.multiply(f, next));
+                    }                    
+                    prev = next;
+                }   
+                return _vertices.get(n-1);
+        }
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
@@ -415,7 +441,7 @@ public class PolyLine extends OrientedGeometry<PolyLine> {
     public GeometryType getGeometryType() {
         return GeometryType.POLYLINE;
     }
-    
+
     @Override
     public PolyLine clone() {
         List<Vector> cloned = new ArrayList();

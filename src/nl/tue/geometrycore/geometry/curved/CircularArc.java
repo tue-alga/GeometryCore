@@ -676,7 +676,7 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
                 }
             }
         }
-    }
+    }   
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">    

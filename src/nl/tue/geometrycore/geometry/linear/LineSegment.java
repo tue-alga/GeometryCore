@@ -266,8 +266,8 @@ public class LineSegment extends OrientedGeometry<LineSegment> {
         }
     }
     
-    
-    public Vector getPointAlongPerimeter(double fraction) {
+    @Override
+    public Vector getPointAt(double fraction) {
         return Vector.add(Vector.multiply((1-fraction), _start), Vector.multiply(fraction, _end));
     }
     //</editor-fold>

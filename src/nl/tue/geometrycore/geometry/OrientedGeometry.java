@@ -38,6 +38,17 @@ public abstract class OrientedGeometry<TActual extends OrientedGeometry> extends
      * @return Length of the perimeter
      */
     public abstract double perimeter();
+
+    /**
+     * Computes the position along this geometry's boundary, using
+     * length-parametrization. A fraction of 0 maps to the start point, and a
+     * fraction of 1 to the end point. Behavior for provided fractions outside
+     * of the interval [0,1] is not specified.
+     *
+     * @param fraction value between 0 and 1
+     * @return Point along the oriented geometry's boundary
+     */
+    public abstract Vector getPointAt(double fraction);
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
