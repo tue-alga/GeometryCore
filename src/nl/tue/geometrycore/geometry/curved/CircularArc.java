@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryType;
-import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Line;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
@@ -60,9 +59,8 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
      */
     public static CircularArc fromStartTangent(Vector start, Vector startTangent, Vector end) {
 
-        boolean ccw = 0 < Vector.crossProduct(
-                startTangent.getX(), startTangent.getY(),
-                end.getX() - start.getX(), end.getY() - start.getY());
+        Vector dir = Vector.subtract(end,start);
+        boolean ccw = 0 < Vector.crossProduct(startTangent, dir);;
 
         Line bisec = Line.bisector(start, end);
         Line perpen = Line.perpendicularAt(start, startTangent);
@@ -530,12 +528,25 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
     @Override
     public Vector closestPoint(Vector point) {
         if (inInfiniteSector(point)) {
-            // same as for circle
-            Vector arm = Vector.subtract(point, _center);
-            arm.normalize();
-            arm.scale(radius());
-            arm.translate(_center);
-            return arm;
+            if (_center != null) {
+                // same as for circle            
+                Vector arm = Vector.subtract(point, _center);
+                arm.normalize();
+                arm.scale(radius());
+                arm.translate(_center);
+                return arm;
+            } else {
+                // same as for line segment (except that we know its in the slab)
+                Vector dir = Vector.subtract(point, _start);
+                Vector chorddir = Vector.subtract(_end, _start);
+                double len = chorddir.length();
+                chorddir.scale(1.0 / len);
+
+                double dotp = Vector.dotProduct(dir, chorddir);
+                chorddir.scale(dotp);
+                chorddir.translate(_start);
+                return chorddir;
+            }
         } else {
             // one of endpoints is closest
             if (point.distanceTo(_start) < point.distanceTo(_end)) {
@@ -676,7 +687,7 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
                 }
             }
         }
-    }   
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">    
