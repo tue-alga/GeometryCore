@@ -77,29 +77,29 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
 
         switch (high - low) {
             case 0:
-                //System.err.println("Should not occur");
+                System.err.println("Should not occur");
                 return null;
             case 1: {
                 // one vertex               
-                //System.err.println("CALL " + low + "-" + (high - 1));
+//                System.err.println("CALL " + low + "-" + (high - 1) + " :: " + _vertices.get(low) + "-" + _vertices.get(high - 1));
                 TVertex u = _vertices.get(low);
-                //System.err.println("RET " + u.getGraphIndex());
+//                System.err.println("RET " + u + " << " + low + "-" + (high - 1));
                 return u;
             }
             case 2: {
                 // one line segment
-                //System.err.println("CALL " + low + "-" + (high - 1));
+//                System.err.println("CALL " + low + "-" + (high - 1) + " :: " + _vertices.get(low) + "-" + _vertices.get(high - 1));
                 TVertex u = _vertices.get(low);
                 TVertex v = _vertices.get(low + 1);
                 addEdge(u, v);
                 TVertex min = u.getY() <= v.getY() ? u : v;
-                //System.err.println("RET " + min.getGraphIndex());
+//                System.err.println("RET " + min + " << " + low + "-" + (high - 1));
                 return min;
             }
             case 3: {
                 // one triangle
 
-                //System.err.println("CALL " + low + "-" + (high - 1));
+//                System.err.println("CALL " + low + "-" + (high - 1) + " :: " + _vertices.get(low) + "-" + _vertices.get(high - 1));
                 TVertex u = _vertices.get(low);
                 TVertex v = _vertices.get(low + 1);
                 TVertex w = _vertices.get(low + 2);
@@ -108,7 +108,7 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
                 addEdge(w, u);
                 TVertex min = u.getY() <= v.getY() && u.getY() <= w.getY()
                         ? u : (v.getY() <= w.getY() ? v : w);
-                //System.err.println("RET " + min.getGraphIndex());
+//                System.err.println("RET " + min + " << " + low + "-" + (high - 1));
                 return min;
             }
             default: {
@@ -116,14 +116,16 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
                 TVertex u = compute(low, mid);
                 TVertex v = compute(mid, high);
 
-                //System.err.println("CALL " + low + "-" + (high - 1));
-                //System.err.println("  mid: " + mid);
+//                System.err.println("CALL " + low + "-" + (high - 1) + " :: " + _vertices.get(low) + "-" + _vertices.get(high - 1));
+
+//                System.err.println("  mid: " + mid);
                 if (u == null || v == null) {
+                    System.err.println("  nulls?  << " + low + "-" + (high - 1));
                     return null;
                 }
 
-//                System.err.println("u" + u.getGraphIndex());
-//                System.err.println("v" + v.getGraphIndex());
+//                System.err.println("  u " + u);
+//                System.err.println("  v " + v);
 
                 TVertex min = u.getY() <= v.getY() ? u : v;
                 // walk up to find edge on lower convex hull
@@ -137,34 +139,39 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
                     v = shiftHull(v, u, mid, Side.RIGHT);
                 } while (u != prevu || v != prevv);
 
-//                System.err.println("u" + u.getGraphIndex());
-//                System.err.println("v" + v.getGraphIndex());
-
                 addEdge(u, v);
 
                 // start merge process
                 TVertex u_cand = candidate(u, v, mid, Side.LEFT);
                 TVertex v_cand = candidate(v, u, mid, Side.RIGHT);
 
+//                System.err.println("  u " + u);
+//                System.err.println("  v " + v);
+//                System.err.println("  u_cand " + u_cand);
+//                System.err.println("  v_cand " + v_cand);
+
                 while (u_cand != null || v_cand != null) {
                     if (u_cand != null && v_cand != null) {
                         Circle c = Circle.byThreePoints(u, v, u_cand);
+//                        System.err.println("  c "+c);
                         if (c != null && c.contains(v_cand)) {
+//                            System.err.println("  discarding u_cand");
                             u_cand = null;
                         } else {
+//                            System.err.println("  discarding v_cand");
                             v_cand = null;
                         }
                     }
 
                     if (u_cand != null) {
                         if (addEdge(u_cand, v)) {
-                            //System.err.println("DUPLICATE EDGE -- aborting");
+                            System.err.println("DUPLICATE EDGE -- aborting" + " << " + low + "-" + (high - 1));
                             return null;
                         }
                         u = u_cand;
                     } else {  // v_cand != null   
                         if (addEdge(u, v_cand)) {
-                            //System.err.println("DUPLICATE EDGE -- aborting");
+                            System.err.println("DUPLICATE EDGE -- aborting" + " << " + low + "-" + (high - 1));
                             return null;
                         }
                         v = v_cand;
@@ -172,20 +179,24 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
 
                     u_cand = candidate(u, v, mid, Side.LEFT);
                     v_cand = candidate(v, u, mid, Side.RIGHT);
+
+//                    System.err.println("  u " + u);
+//                    System.err.println("  v " + v);
+//                    System.err.println("  u_cand " + u_cand);
+//                    System.err.println("  v_cand " + v_cand);
                 }
 
-                //System.err.println("RET " + min.getGraphIndex());
+//                System.err.println("RET " + min + " << " + low + "-" + (high - 1));
                 return min;
             }
         }
     }
 
     private boolean addEdge(TVertex u, TVertex v) {
+//        System.err.println("  adding " + u + "-" + v);
         if (u.isNeighborOf(v)) {
             return true;
         }
-
-        //System.err.println("  adding " + u.getGraphIndex() + " " + v.getGraphIndex());
         _input.addEdge(u, v, _cloner.clone(new LineSegment(u.clone(), v.clone())));
         return false;
     }
@@ -237,14 +248,19 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
         Vector dir = Vector.subtract(other, vertex);
         dir.normalize();
 
+//        System.err.println("  candidate? "+vertex+" "+other);
+        
         TVertex first = findFirst(vertex, dir, mid, side);
+//        System.err.println("    first "+first);
         if (first == null) {
             return null;
         }
         TVertex second = findSecond(vertex, dir, mid, side);
+//        System.err.println("    second "+second);
         Circle c = Circle.byThreePoints(vertex, other, first);
+//        System.err.println("    c "+c);
         while (second != null && c != null && c.contains(second)) {
-            //System.err.println("  removing " + vertex.getGraphIndex() + " - " + first.getGraphIndex());
+//            System.err.println("  removing " + vertex + "-" + first);
             _input.removeEdge(vertex.getEdgeTo(first));
             first = second;
             second = findSecond(vertex, dir, mid, side);
@@ -308,6 +324,8 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
             double a = side == Side.LEFT
                     ? dir.computeCounterClockwiseAngleTo(edir, false, false)
                     : dir.computeClockwiseAngleTo(edir, false, false);
+            
+//            System.err.println("      "+nbr+" :: "+a);
 //            if (a > Math.PI * 2 - DoubleUtil.EPS) {
 //                a = 0;
 //            }
@@ -326,7 +344,7 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
             return null;
         }
 
-        if (opt >= Math.PI) {
+        if (sec_opt >= Math.PI) {
             return null;
         }
 
