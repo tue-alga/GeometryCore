@@ -16,7 +16,6 @@ import nl.tue.geometrycore.geometry.linear.LineSegment;
 import nl.tue.geometrycore.graphs.simple.SimpleEdge;
 import nl.tue.geometrycore.graphs.simple.SimpleGraph;
 import nl.tue.geometrycore.graphs.simple.SimpleVertex;
-import nl.tue.geometrycore.util.DoubleUtil;
 import nl.tue.geometrycore.util.LexicographicOrder;
 
 /**
