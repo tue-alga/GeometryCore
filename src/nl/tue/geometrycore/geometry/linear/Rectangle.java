@@ -254,6 +254,10 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
             } else {
                 return new Vector(_right, point.getY());
             }
+        } else if (point.getY() >= _top) {
+            return new Vector(point.getX(), _top);
+        } else if (point.getY() <= _bottom) {
+            return new Vector(point.getX(), _bottom);
         } else {
             // inside
             double dx;
