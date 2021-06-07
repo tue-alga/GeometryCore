@@ -307,6 +307,14 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
     public double centralAngle() {
         return centralAngle(radius());
     }
+    
+    /**
+     * Computes the sagitta of the arc. This value is always positive.
+     * @return sagitta of the arc 
+     */
+    public double sagitta() {
+        return new LineSegment(_start,_end).getPointAt(0.5).distanceTo(getPointAt(0.5));
+    }
 
     /**
      * Computes the central angle for the arc. Positive values indicate a
