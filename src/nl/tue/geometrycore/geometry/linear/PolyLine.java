@@ -111,8 +111,13 @@ public class PolyLine extends OrientedGeometry<PolyLine> {
 
     @Override
     public Vector closestPoint(Vector point) {
+        if (_vertices.size() == 1) {
+            return _vertices.get(0).clone();
+        }
+        
         Vector result = null;
         double distance = Double.POSITIVE_INFINITY;
+        
         for (LineSegment edge : edges()) {
             Vector closest = edge.closestPoint(point);
             double d = closest.squaredDistanceTo(point);
