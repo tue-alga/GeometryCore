@@ -34,12 +34,12 @@ public class MinimumSpanningTree<TGraph extends SimpleGraph<TGeom, TVertex, TEdg
     //<editor-fold defaultstate="collapsed" desc="FIELDS">
     private final List<VertexState> vstates;
     private final TGraph graph;
-    private final EdgeWeightInterface ewi;
+    private final EdgeWeightInterface<TEdge> ewi;
     private double lengthOfLastQuery = Double.NaN;
     //</editor-fold>    
 
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
-    public MinimumSpanningTree(TGraph graph, EdgeWeightInterface ewi) {
+    public MinimumSpanningTree(TGraph graph, EdgeWeightInterface<TEdge> ewi) {
         this.graph = graph;
         this.vstates = new ArrayList(graph.getVertices().size());
         for (TVertex v : graph.getVertices()) {
