@@ -187,6 +187,25 @@ public enum GeometryType {
                 }
             },
     /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.Ellipse}.
+     */
+    ELLIPSE {
+                @Override
+                public boolean isOrientable() {
+                    return false;
+                }
+
+                @Override
+                public boolean isCyclic() {
+                    return true;
+                }
+
+                @Override
+                public boolean isInfinite() {
+                    return false;
+                }
+            },
+    /**
      * For instances of
      * {@link nl.tue.geometrycore.geometry.mixed.GeometryCycle}.
      */
