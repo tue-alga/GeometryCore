@@ -79,7 +79,7 @@ public abstract class SimpleEdge<TGeom extends OrientedGeometry<TGeom>, TVertex 
         return _geometry;
     }
 
-    public TVertex getCommonVertex(SimpleEdge edge) {
+    public TVertex getCommonVertex(TEdge edge) {
         if (_start == edge._start || _start == edge._end) {
             return _start;
         } else if (_end == edge._start || _end == edge._end) {
@@ -87,5 +87,13 @@ public abstract class SimpleEdge<TGeom extends OrientedGeometry<TGeom>, TVertex 
         } else {
             return null;
         }
+    }
+    
+    public boolean isIncidentTo(TVertex v) {
+        return v == _start || v == _end;
+    }
+    
+    public boolean connects(TVertex u, TVertex v) {
+        return u != v && isIncidentTo(u) && isIncidentTo(v);
     }
 }
