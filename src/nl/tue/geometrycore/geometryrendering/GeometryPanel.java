@@ -26,19 +26,46 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
+import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
+import nl.tue.geometrycore.geometryrendering.interactions.Interaction;
+import nl.tue.geometrycore.geometryrendering.interactions.InteractiveLayer;
+import nl.tue.geometrycore.geometryrendering.interactions.UndoRedo;
 import nl.tue.geometrycore.geometryrendering.styling.FontStyle;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
 import nl.tue.geometrycore.io.LayeredWriter;
 import nl.tue.geometrycore.io.raster.RasterWriter;
 
 /**
+ * This GUI panel allows for rendering geometric objects using world
+ * coordinates. To this end, it implements the
+ * {@link nl.tue.geometrycore.geometryrendering.GeometryRenderer} interface.
+ *
+ * It provides basic interactions for panning (right-mouse dragging), zooming
+ * (scroll wheel, or scroll-wheel dragging) and zoom-to-fit (spacebar). These
+ * interactions are enabled by default, but can be disabled.
+ *
+ * It also provides the possibility to add basic interactions with geometric
+ * objects. Specifically, it uses so-called interactive layers
+ * {@link nl.tue.geometrycore.geometryrendering.interactions.InteractiveLayer}
+ * that can be added which represent a bunch of interaction opportunities
+ * (instantiations of {@link Interaction}) on a set of geometries. These layers
+ * are tested in order of adding them, as soon as a possible interaction
+ * (correct combination of buttons, modifiers and a sufficiently close geometric
+ * object) within a layer is found, this interaction is started. Pressing ESCAPE
+ * cancels the operation.
+ *
+ * The panel keeps track of an undo/redo stack by default (though this can be
+ * disabled). Undo is bound to Ctrl-Z while Redo is bound to Ctrl+Shift+Z.
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
@@ -50,17 +77,24 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     private Graphics2D _graphics;
     private boolean _antialiasing = true;
     private final AffineTransform _worldToView;
+    private boolean _firstDraw = true;
     // interaction
     private double _margin = 0.03;
     private double _zoomRate = 11.0 / 10.0;
     private int _animationStepDuration = 1000 / 50; // 50 FPS
-    private boolean _defaultInteractionEnabled = true;
+    private boolean _panningEnabled = true;
+    private boolean _zoomingEnabled = true;
     // mouse events
     private int _mouseButton = MouseEvent.NOBUTTON;
     private Vector _mousePrevWorld;
     private Vector _mousePrevView;
     private Color _zoomboxColor = new Color(4, 162, 176);
     private Vector _zoomboxStart = null, _zoomboxEnd = null;
+    // interaction with geometric objects    
+    private final List<InteractiveLayer> _layers = new ArrayList();
+    private Interaction _current = null;
+    private Stack<UndoRedo> _undo = new Stack();
+    private Stack<UndoRedo> _redo = new Stack();
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
@@ -92,12 +126,38 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         _antialiasing = antialiasing;
     }
 
+    /**
+     *
+     * @return true if both zooming and panning are enabled
+     * @deprecated Replaced by isZoomingEnabled and isPanningEnabled.
+     */
     public boolean isDefaultInteractionEnabled() {
-        return _defaultInteractionEnabled;
+        return _zoomingEnabled && _panningEnabled;
     }
 
+    /**
+     *
+     * @deprecated Replaced by setZoomingEnabled and setPanningEnabled.
+     */
     public void setDefaultInteractionEnabled(boolean enableDefaultInteraction) {
-        _defaultInteractionEnabled = enableDefaultInteraction;
+        setPanningEnabled(enableDefaultInteraction);
+        setZoomingEnabled(enableDefaultInteraction);
+    }
+
+    public boolean isPanningEnabled() {
+        return _panningEnabled;
+    }
+
+    public void setPanningEnabled(boolean panningEnabled) {
+        _panningEnabled = panningEnabled;
+    }
+
+    public boolean isZoomingEnabled() {
+        return _zoomingEnabled;
+    }
+
+    public void setZoomingEnabled(boolean zoomingEnabled) {
+        _zoomingEnabled = zoomingEnabled;
     }
 
     public double getMargin() {
@@ -131,6 +191,90 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     public void setAnimationStepDuration(int animationStepDuration) {
         _animationStepDuration = animationStepDuration;
     }
+
+    /**
+     * Returns whether this panel keeps track of the interactions, allowing them
+     * to be reverted and re-performed.
+     *
+     * @return whether undo is enabled
+     */
+    public boolean isUndoRedoEnabled() {
+        return _undo != null;
+    }
+
+    /**
+     * Enables or disables undo-redo functionality. Note that disabling causes a
+     * loss of all information currently in the undo-redo stacks. Enabling while
+     * it is already enabled has no effect.
+     *
+     * @param undoRedoEnabled
+     */
+    public void setUndoRedoEnabled(boolean undoRedoEnabled) {
+        if (undoRedoEnabled) {
+            if (!isUndoRedoEnabled()) {
+                _undo = new Stack();
+                _redo = new Stack();
+            }
+        } else {
+            _undo = null;
+            _redo = null;
+        }
+    }
+
+    public void clearUndoRedo() {
+        if (_undo != null) {
+            _undo.clear();
+            _redo.clear();
+        }
+    }
+
+    /**
+     * Returns the list of actions that can currently be undone
+     *
+     * @return pointer to the stack
+     */
+    public Stack<UndoRedo> getUndo() {
+        return _undo;
+    }
+
+    /**
+     * Returns the list of actions that can currently be redone.
+     *
+     * @return pointer to the stack
+     */
+    public Stack<UndoRedo> getRedo() {
+        return _redo;
+    }
+
+    /**
+     * Adds a new interaction layer. Note that this layer will only be triggered
+     * if none of the layers added earlier trigger an action.
+     *
+     * @param layer the new layer
+     */
+    public void addInteractiveLayer(InteractiveLayer layer) {
+        _layers.add(layer);
+    }
+
+    /**
+     * Returns the list of interactive layers for this panel. Note that changes
+     * in this list affect the panel as well.
+     *
+     * @return a pointer to the list of layers
+     */
+    public List<InteractiveLayer> getInteractiveLayers() {
+        return _layers;
+    }
+
+    /**
+     * Returns the current interaction. This method results null if no
+     * interaction is currently active.
+     *
+     * @return pointer to the current interaction
+     */
+    public Interaction getCurrentInteraction() {
+        return _current;
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="RENDERING">
@@ -150,6 +294,12 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     }
 
     public void render(GeometryRenderer renderer) {
+
+        if (_firstDraw) {
+            zoomToFit();
+            _firstDraw = false;
+        }
+
         _renderer = renderer;
 
         drawScene();
@@ -496,57 +646,103 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     public void mousePressed(MouseEvent e) {
         requestFocus();
 
-        _mousePrevView = convertScreenToView(e);
-        Vector loc = convertViewToWorld(_mousePrevView);
-        _mouseButton = getButtonCode(e);
-
-        if (_defaultInteractionEnabled) {
-            if (_mouseButton == MouseEvent.BUTTON2) {
-                _zoomboxStart = loc;
-                _zoomboxEnd = loc;
-            } else {
-                _zoomboxStart = null;
-                _zoomboxEnd = null;
-            }
+        if (_current != null) {
+            _current.endInteraction();
+            _current.setCurrentGeometry(null);
+            _current = null;
         }
 
-        // forward
+        Vector viewLoc = convertScreenToView(e);
+        Vector loc = convertViewToWorld(viewLoc);
+        _mouseButton = getButtonCode(e);
+
         boolean ctrl = isCtrlDown(e);
         boolean shift = isShiftDown(e);
         boolean alt = isAltDown(e);
 
-        // forward
-        mousePress(loc, _mouseButton, ctrl, shift, alt);
+        boolean handled = false;
+
+        if (_zoomingEnabled && !ctrl && !shift && !alt) {
+            if (_mouseButton == MouseEvent.BUTTON2) {
+                // zoombox
+                _zoomboxStart = loc;
+                _zoomboxEnd = loc;
+                handled = true;
+            } else if (_mouseButton == MouseEvent.BUTTON3) {
+                // panning
+                handled = true;
+            }
+        }
+
+        double viewToWorld = convertViewToWorld(1);
+        for (InteractiveLayer object : _layers) {
+            Interaction action = object.findAction(_mouseButton, ctrl, shift, alt);
+            if (action != null) {
+                BaseGeometry geom = object.findGeometry(loc, viewToWorld);
+                if (geom != null) {
+                    _current = action;
+                    _current.setCurrentGeometry(geom);
+                    _current.startInteraction(loc);
+                    repaint();
+                    handled = true;
+                    break;
+                }
+            }
+        }
+
+        if (!handled) {
+            // forward
+            mousePress(loc, _mouseButton, ctrl, shift, alt);
+        }
 
         // store last loc
         _mousePrevWorld = loc;
+        _mousePrevView = viewLoc;
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
 
-        _mousePrevView = convertScreenToView(e);
-        Vector loc = convertViewToWorld(_mousePrevView);
+        Vector viewLoc = convertScreenToView(e);
+        Vector loc = convertViewToWorld(viewLoc);
 
-        if (_defaultInteractionEnabled) {
-            if (_mouseButton == MouseEvent.BUTTON2 && _zoomboxStart != null) {
-                Rectangle box = Rectangle.byCorners(_zoomboxStart, loc);
-                zoomToBox(box);
-            }
-            _zoomboxStart = null;
-            _zoomboxEnd = null;
-        }
-
-        // forward
         boolean ctrl = isCtrlDown(e);
         boolean shift = isShiftDown(e);
         boolean alt = isAltDown(e);
 
-        // forward
-        mouseRelease(loc, _mouseButton, ctrl, shift, alt);
+        boolean handled = false;
+
+        if (_zoomboxStart != null) {
+            Rectangle box = Rectangle.byCorners(_zoomboxStart, loc);
+            zoomToBox(box);
+            _zoomboxStart = null;
+            _zoomboxEnd = null;
+            handled = true;
+        }
+
+        if (_current != null) {
+            UndoRedo undoredo = _current.endInteraction();
+            if (!_current.isImmediate()) {
+                undoredo.redo();
+            }
+            if (_undo != null) {
+                _undo.push(undoredo);
+                _redo.clear();
+            }
+            _current.setCurrentGeometry(null);
+            _current = null;
+            repaint();
+            handled = true;
+        }
+
+        if (!handled) {
+            // forward
+            mouseRelease(loc, _mouseButton, ctrl, shift, alt);
+        }
 
         // store last loc
         _mousePrevWorld = loc;
+        _mousePrevView = viewLoc;
         _mouseButton = MouseEvent.NOBUTTON;
     }
 
@@ -561,81 +757,96 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     @Override
     public void mouseDragged(MouseEvent e) {
 
-        if (_defaultInteractionEnabled) {
-            if (_mouseButton == MouseEvent.BUTTON3) {
-                // pan
-                Vector newmouse = convertScreenToView(e);
-                double dx = newmouse.getX() - _mousePrevView.getX();
-                double dy = newmouse.getY() - _mousePrevView.getY();
+        Vector viewLoc = convertScreenToView(e);
+        Vector loc = convertViewToWorld(viewLoc);
 
-                translateView(dx, dy);
-            }
-        }
-
-        _mousePrevView = convertScreenToView(e);
-        Vector loc = convertViewToWorld(_mousePrevView);
-
-        if (_defaultInteractionEnabled) {
-            if (_mouseButton == MouseEvent.BUTTON2 && _zoomboxStart != null) {
-                _zoomboxEnd = loc;
-                repaint();
-            } else {
-                _zoomboxStart = null;
-                _zoomboxEnd = null;
-            }
-        }
-
-        // forward
         boolean ctrl = isCtrlDown(e);
         boolean shift = isShiftDown(e);
         boolean alt = isAltDown(e);
 
-        mouseDrag(loc, _mousePrevWorld, _mouseButton, ctrl, shift, alt);
+        boolean handled = false;
+
+        if (_zoomboxStart != null) {
+            _zoomboxEnd = loc;
+            repaint();
+            handled = true;
+        }
+
+        if (_current != null) {
+            _current.updateInteraction(loc, _mousePrevWorld);
+            repaint();
+        }
+
+        if (_panningEnabled && !ctrl && !shift && !alt) {
+            if (_mouseButton == MouseEvent.BUTTON3) {
+                // pan
+                double dx = viewLoc.getX() - _mousePrevView.getX();
+                double dy = viewLoc.getY() - _mousePrevView.getY();
+
+                translateView(dx, dy);
+                handled = true;
+            }
+        }
+
+        // forward
+        if (!handled) {
+            mouseDrag(loc, _mousePrevWorld, _mouseButton, ctrl, shift, alt);
+        }
 
         // store last loc
         _mousePrevWorld = loc;
+        _mousePrevView = viewLoc;
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
 
-        _mousePrevView = convertScreenToView(e);
-        Vector loc = convertViewToWorld(_mousePrevView);
+        Vector viewLoc = convertScreenToView(e);
+        Vector loc = convertViewToWorld(viewLoc);
 
-        // forward
         boolean ctrl = isCtrlDown(e);
         boolean shift = isShiftDown(e);
         boolean alt = isAltDown(e);
 
         mouseMove(loc, _mouseButton, ctrl, shift, alt);
+
+        // store last loc
+        _mousePrevWorld = loc;
+        _mousePrevView = viewLoc;
     }
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
 
-        _mousePrevView = convertScreenToView(e);
-        Vector preWorld = convertViewToWorld(_mousePrevView);
+        Vector viewLoc = convertScreenToView(e);
+        Vector loc = convertViewToWorld(viewLoc);
 
         boolean ctrl = isCtrlDown(e);
         boolean shift = isShiftDown(e);
         boolean alt = isAltDown(e);
 
-        if (_defaultInteractionEnabled && !(ctrl || shift || alt)) {
+        boolean handled = false;
+
+        if (_zoomingEnabled && !ctrl && !shift && !alt) {
             double factor = e.getWheelRotation() < 0 ? _zoomRate : 1.0 / _zoomRate;
 
             zoom(factor);
 
-            Vector postViewport = convertWorldToView(preWorld);
+            Vector postViewport = convertWorldToView(loc);
             Vector diff = Vector.subtract(_mousePrevView, postViewport);
 
             translateView(diff);
+            handled = true;
         }
 
-        // forward
-        mouseWheelMove(preWorld, e.getWheelRotation(), ctrl, shift, alt);
+        if (!handled) {
+            // forward        
+            mouseWheelMove(loc, e.getWheelRotation(), ctrl, shift, alt);
+        }
 
         // store last loc
-        _mousePrevWorld = preWorld;
+        _mousePrevWorld = loc;
+        _mousePrevView = viewLoc;
     }
 
     @Override
@@ -644,24 +855,61 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
 
     @Override
     public void keyPressed(KeyEvent e) {
+
+        boolean ctrl = isCtrlDown(e);
+        boolean shift = isShiftDown(e);
+        boolean alt = isAltDown(e);
+
+        boolean handled = false;
         switch (e.getKeyCode()) {
             case KeyEvent.VK_SPACE:
-                if (_defaultInteractionEnabled) {
-                    if (isShiftDown(e)) {
+                if (_zoomingEnabled) {
+                    if (!ctrl && shift && !alt) {
                         resetView();
-                    } else {
+                        handled = true;
+                    } else if (!ctrl && !shift && !alt) {
                         zoomToFit();
+                        handled = true;
                     }
                     break;
                 }
-            default:
-                // forward
-                boolean ctrl = isCtrlDown(e);
-                boolean shift = isShiftDown(e);
-                boolean alt = isAltDown(e);
-
-                keyPress(e.getKeyCode(), ctrl, shift, alt);
+            case KeyEvent.VK_ESCAPE:
+                if (_current != null) {
+                    UndoRedo undoredo = _current.endInteraction();
+                    if (_current.isImmediate()) {
+                        undoredo.undo();
+                    }
+                    _current.setCurrentGeometry(null);
+                    _current = null;
+                    repaint();
+                    handled = true;
+                }
                 break;
+            case KeyEvent.VK_Z:
+                if (!_layers.isEmpty() && _undo != null) {
+                    if (ctrl && !shift && !alt) {
+                        if (!_undo.isEmpty()) {
+                            UndoRedo undoredo = _undo.pop();
+                            undoredo.undo();
+                            _redo.push(undoredo);
+                            repaint();
+                        }
+                        handled = true;
+                    } else if (ctrl && shift && !alt) {
+                        if (!_redo.isEmpty()) {
+                            UndoRedo undoredo = _redo.pop();
+                            undoredo.redo();
+                            _undo.push(undoredo);
+                            repaint();
+                        }
+                        handled = true;
+                    }
+                }
+                break;
+        }
+        if (!handled) {
+            // forward
+            keyPress(e.getKeyCode(), ctrl, shift, alt);
         }
     }
 

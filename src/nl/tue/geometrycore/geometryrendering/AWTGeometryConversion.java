@@ -7,6 +7,7 @@
 package nl.tue.geometrycore.geometryrendering;
 
 import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
@@ -23,6 +24,7 @@ import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.curved.BezierCurve;
 import nl.tue.geometrycore.geometry.curved.Circle;
 import nl.tue.geometrycore.geometry.curved.CircularArc;
+import nl.tue.geometrycore.geometry.curved.Ellipse;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
 import nl.tue.geometrycore.geometry.linear.PolyLine;
 import nl.tue.geometrycore.geometry.linear.Polygon;
@@ -32,7 +34,7 @@ import nl.tue.geometrycore.geometry.mix.GeometryGroup;
 import nl.tue.geometrycore.geometry.mix.GeometryString;
 
 /**
- * 
+ *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
 public class AWTGeometryConversion {
@@ -58,6 +60,8 @@ public class AWTGeometryConversion {
                 return toShape((CircularArc) geom);
             case CIRCLE:
                 return toShape((Circle) geom);
+            case ELLIPSE:
+                return toShape((Ellipse) geom);
             case POLYLINE:
                 return toShape((PolyLine) geom);
             case POLYGON:
@@ -125,6 +129,20 @@ public class AWTGeometryConversion {
         double width = 2 * radius;
 
         return new Ellipse2D.Double(x, y, width, width);
+    }
+
+    private static Shape toShape(Ellipse ellipse) {
+
+        Vector axis = ellipse.getAxis();
+        double angle = Vector.right().computeCounterClockwiseAngleTo(axis);
+        double a = ellipse.getWidth() / 2.0;
+        double b = ellipse.getHeight() / 2.0;
+        Vector center = ellipse.getCenter();
+
+        Shape E = new Ellipse2D.Double(-a, -b, 2 * a, 2 * b);
+        E = AffineTransform.getRotateInstance(angle).createTransformedShape(E);
+        E = AffineTransform.getTranslateInstance(center.getX(), center.getY()).createTransformedShape(E);
+        return E;
     }
 
     private static Shape toShape(CircularArc arc) {

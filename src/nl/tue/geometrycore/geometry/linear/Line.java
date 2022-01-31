@@ -86,6 +86,17 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
 
         return new Line(location, perpendicular);
     }
+
+    /**
+     * Computes the line spanned by the given line segment, i.e., through its
+     * two endpoints.
+     *
+     * @param ls line segment through which the line should pass
+     * @return constructed line
+     */
+    public static Line spannedBy(LineSegment ls) {
+        return Line.byThroughpoints(ls.getStart(), ls.getEnd());
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="GET & SET">

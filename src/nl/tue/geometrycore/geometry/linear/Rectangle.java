@@ -254,24 +254,46 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
             } else {
                 return new Vector(_right, point.getY());
             }
+        } else if (point.getY() >= _top) {
+            return new Vector(point.getX(), _top);
+        } else if (point.getY() <= _bottom) {
+            return new Vector(point.getX(), _bottom);
         } else {
             // inside
-            double dx;
-            if (point.getX() - _left < _right - point.getX()) {
-                dx = _left - point.getX();
+            double dL = point.getX() - _left;
+            double dR = _right - point.getX();
+            double dT = _top - point.getY();
+            double dB = point.getY() - _bottom;
+
+            if (dL <= dR) {
+                if (dB <= dT) {
+                    if (dL <= dB) {
+                        return new Vector(point.getX() - dL, point.getY());
+                    } else {
+                        return new Vector(point.getX(), point.getY() - dB);
+                    }
+                } else {
+                    if (dL <= dT) {
+                        return new Vector(point.getX() - dL, point.getY());
+                    } else {
+                        return new Vector(point.getX(), point.getY() + dT);
+                    }
+                }
             } else {
-                dx = _right - point.getX();
-            }
-            double dy;
-            if (point.getY() - _bottom < _top - point.getY()) {
-                dy = _bottom - point.getY();
-            } else {
-                dy = _top - point.getY();
-            }
-            if (dx < dy) {
-                return new Vector(point.getX() + dx, point.getY());
-            } else {
-                return new Vector(point.getX(), point.getY() + dy);
+                if (dB <= dT) {
+                    if (dR <= dB) {
+                        return new Vector(point.getX() + dR, point.getY());
+                    } else {
+                        return new Vector(point.getX(), point.getY() - dB);
+                    }
+                } else {
+                    if (dR <= dT) {
+                        return new Vector(point.getX() + dR, point.getY());
+                    } else {
+                        return new Vector(point.getX(), point.getY() + dT);
+
+                    }
+                }
             }
         }
     }
