@@ -205,13 +205,41 @@ public class AWTGeometryConversion {
     }
 
     private static Shape toShape(BezierCurve bezierCurve) {
+        Vector u = bezierCurve.getStart();
+        Vector v = bezierCurve.getEnd();
+        
         Path2D path = new Path2D.Double();
-        Vector v = bezierCurve.getStart();
-        path.moveTo(v.getX(), v.getY());
-        Vector cp1 = bezierCurve.getControlpoints().get(1);
-        Vector cp2 = bezierCurve.getControlpoints().get(2);
-        Vector u = bezierCurve.getControlpoints().get(3);
-        path.curveTo(cp1.getX(), cp1.getY(), cp2.getX(), cp2.getY(), u.getX(), u.getY());
+        path.moveTo(u.getX(), u.getY());
+        
+        int d = bezierCurve.getControlpoints().size();
+        switch (d) {
+            case 2:{
+                // line segment
+                path.lineTo(v.getX(), v.getY());
+                break;}
+            case 3:{
+                // quadratic bezier
+                Vector cp1 = bezierCurve.getControlpoints().get(1);
+                path.quadTo(cp1.getX(), cp1.getY(), v.getX(), v.getY());
+                break;}
+            default:{
+                Logger.getLogger(AWTGeometryConversion.class.getClass().getName()).log(Level.WARNING,
+                        "Unsupported number of control points for conversion: {0}; Bézier curves must have 2 to 4 control points. Using arbitrary control points instead.", bezierCurve.getControlpoints().size());
+                if (d < 2) {
+                    // nothing to do
+                    break;
+                }
+                // else: fall through to cubic Bezier
+            }
+            case 4:      {
+                // cubic bezier
+                Vector cp1 = bezierCurve.getControlpoints().get(1);
+                Vector cp2 = bezierCurve.getControlpoints().get(d-2);
+                path.curveTo(cp1.getX(), cp1.getY(), cp2.getX(), cp2.getY(), v.getX(), v.getY());
+                break;
+            }                
+        }        
+        
         return path;
     }
 
