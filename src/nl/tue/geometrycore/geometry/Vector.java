@@ -61,7 +61,7 @@ public class Vector extends BaseGeometry<Vector> {
     public static Vector up() {
         return new Vector(0, 1);
     }
-    
+
     /**
      * Creates a vector representing the up-direction.
      *
@@ -80,7 +80,7 @@ public class Vector extends BaseGeometry<Vector> {
     public static Vector down() {
         return new Vector(0, -1);
     }
-    
+
     /**
      * Creates a vector representing the down-direction.
      *
@@ -99,7 +99,7 @@ public class Vector extends BaseGeometry<Vector> {
     public static Vector left() {
         return new Vector(-1, 0);
     }
-    
+
     /**
      * Creates a vector representing the left-direction.
      *
@@ -118,7 +118,7 @@ public class Vector extends BaseGeometry<Vector> {
     public static Vector right() {
         return new Vector(1, 0);
     }
-    
+
     /**
      * Creates a vector representing the right-direction.
      *
@@ -323,6 +323,7 @@ public class Vector extends BaseGeometry<Vector> {
 
     /**
      * Scales this Vector to have length 1.
+     *
      * @return the length of the vector prior to normalization
      */
     public double normalize() {
@@ -387,9 +388,10 @@ public class Vector extends BaseGeometry<Vector> {
     public static Vector add(final Vector a, final Vector b) {
         return new Vector(a._x + b._x, a._y + b._y);
     }
-    
+
     /**
-     * Performs standard Vector addition of a sequence of vectors, creating a new Vector.
+     * Performs standard Vector addition of a sequence of vectors, creating a
+     * new Vector.
      *
      * @param vs array of zero or more vectors
      * @return new Vector representing addition of all vectors in vs
@@ -496,6 +498,19 @@ public class Vector extends BaseGeometry<Vector> {
         Vector r = a.clone();
         r.rotate(angle);
         return r;
+    }
+
+    /**
+     * Linearly interpolates between a and b, based on a fraction of the
+     * distance.
+     *
+     * @param a
+     * @param b
+     * @param f
+     * @return new Vector representing (1-f)*a + f*b
+     */
+    public static Vector interpolate(Vector a, Vector b, double f) {
+        return Vector.add(Vector.multiply(1 - f, a), Vector.multiply(f, b));
     }
 
     /**
