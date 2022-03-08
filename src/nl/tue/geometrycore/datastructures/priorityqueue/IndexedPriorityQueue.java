@@ -6,6 +6,7 @@
  */
 package nl.tue.geometrycore.datastructures.priorityqueue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  * using indexation, some methods can be done more efficiently. The ordering is
  * based on a comparator. The smallest value according to this comparator is
  * treated as the highest priority.
- * 
+ *
  * Implementation partially based on {@link java.util.PriorityQueue}.
  *
  * @param <T> the class of objects stored in the priority queue
@@ -61,11 +62,22 @@ public class IndexedPriorityQueue<T extends Indexable> {
 
     //<editor-fold defaultstate="collapsed" desc="QUERIES">
     /**
-     * Converts the queue contents to an list.
+     * Converts the queue contents to a new list.
      *
-     * @return new list with the contents of this queue
+     * @return a new list with the contents of this queue
      */
     public List<T> extractContents() {
+        return (List) new ArrayList(listContents());
+    }
+
+    /**
+     * Converts the queue contents to a list. Note that altering this list
+     * affects the queue and vice versa. This should only be used to inspect its
+     * elements.
+     *
+     * @return a list with the contents of this queue
+     */
+    public List<T> listContents() {
         return (List) Arrays.asList(_queue).subList(0, _size);
     }
 
