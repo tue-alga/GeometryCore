@@ -17,9 +17,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
+import nl.tue.geometrycore.geometry.CyclicGeometry;
+import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.curved.BezierCurve;
 import nl.tue.geometrycore.geometry.curved.Circle;
@@ -56,6 +59,7 @@ public class IPEReader extends BaseReader {
     private final BufferedReader _source;
     private String _currentLayer;
     private int _bezierSampling = -1;
+    private Stack<double[][]> matrixstack = new Stack();
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
@@ -347,159 +351,48 @@ public class IPEReader extends BaseReader {
         Color fill = interpretColor(readAttribute(line, "fill="));
         double strokewidth = interpretPen(readAttribute(line, "pen="));
         double[][] m = interpretMatrix(readAttribute(line, "matrix="));
+        if (m != null) {
+            matrixstack.push(m);
+        }
 
         Dashing dash = interpretDash(readAttribute(line, "dash="));
         double alpha = interpretTransparency(readAttribute(line, "opacity="));
 
         // start reading geometries
-        List<BaseGeometry> complexgeos = new ArrayList();
-        List<Vector> polyline = null;
+        List<BaseGeometry> finishedgeometries = new ArrayList();
+
+        PathReader current = null;
 
         line = _source.readLine();
 
-        Vector first = null;
-        Vector prev = null;
-        int nummoves = 0;
-        boolean closed = false;
-        int bezier_mode = 0; // 0: no bezier; 1: fresh bezier; 2: bezier that can be appended to previous
         while (!line.startsWith("</path>")) {
             if (line.endsWith("h")) {
                 // return to first
-                if (polyline != null) {
-                    complexgeos.add(new Polygon(polyline));
-                } else if (prev != null) {
-                    complexgeos.add(new LineSegment(prev, first));
-                }
-                polyline = null;
-                prev = null;
-                first = null;
-                closed = true;
+                finishedgeometries.add(current.close());
+                current = null;
             } else if (line.endsWith(" m")) {
-                nummoves++;
-                if (polyline != null) {
-                    if (polyline.size() > 2) {
-                        complexgeos.add(new PolyLine(polyline));
-                    } else if (polyline.size() == 2) {
-                        complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
-                    }
+                if (current != null) {
+                    finishedgeometries.add(current.end());
                 }
-                // move
-                first = interpretPosition(line, m);
-                prev = first;
-
-                polyline = new ArrayList();
-                polyline.add(first);
+                current = new PathReader();
+                current.move(interpretPosition(line));
             } else if (line.endsWith(" l")) {
-                // line to
-                Vector loc = interpretPosition(line, m);
-
-                if (polyline == null) {
-                    polyline = new ArrayList();
-                    polyline.add(prev);
-                }
-                polyline.add(loc);
-                prev = loc;
+                current.lineTo(interpretPosition(line));
             } else if (line.endsWith(" e")) {
-                if (polyline != null) {
-                    if (polyline.size() > 2) {
-                        complexgeos.add(new PolyLine(polyline));
-                    } else if (polyline.size() == 2) {
-                        complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
-                    }
+                if (current != null) {
+                    finishedgeometries.add(current.end());
+                    current = null;
                 }
-
                 // circle (NB: closed)
-                complexgeos.add(interpretCircle(line, m));
-                prev = null;
-                first = null;
-                polyline = null;
-                nummoves++;
+                finishedgeometries.add(interpretCircle(line));
             } else if (line.endsWith(" a")) {
-                if (polyline != null) {
-                    if (polyline.size() > 2) {
-                        complexgeos.add(new PolyLine(polyline));
-                    } else if (polyline.size() == 2) {
-                        complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
-                    }
-                }
-
-                // circular arc
-                CircularArc arc = interpretCircularArc(line, prev, m);
-                complexgeos.add(arc);
-                prev = arc.getEnd();
-
-                //first = null;
-                polyline = null;
-
+                current.arcTo(interpretCircularArc(line, current._end));
             } else if (line.endsWith(" c")) {
-
-                String[] coords = (line).split(" ");
-                Vector p = interpretPosition(coords[0], coords[1], m);
-
-                assert prev != null;
-
-                if (polyline == null) {
-                    polyline = new ArrayList();
-                    polyline.add(prev);
-                }
-                polyline.add(p);
-
-                if (_bezierSampling < 0) {
-                    if (polyline.size() == 2) {
-                        complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
-                    } else {
-                        complexgeos.add(new BezierCurve(polyline));
-                    }
-                    polyline = null;
-                } else {
-                    BezierCurve bc = new BezierCurve(polyline);
-                    List<Vector> vs = new ArrayList();
-                    if (bezier_mode == 1) {
-                        vs.add(bc.getStart());
-                    }
-                    for (int i = 1; i <= _bezierSampling; i++) {
-                        double t = i / (double) (_bezierSampling + 1);
-                        vs.add(bc.getPointAt(t));
-                    }
-                    vs.add(bc.getEnd());
-                    if (bezier_mode == 1) {
-                        polyline = vs;
-                    } else if (complexgeos.get(complexgeos.size() - 1) instanceof PolyLine) {
-                        polyline = ((PolyLine) complexgeos.remove(complexgeos.size() - 1)).vertices();
-                        polyline.addAll(vs);
-                    } else {
-                        LineSegment ls = (LineSegment) complexgeos.remove(complexgeos.size() - 1);
-                        polyline = vs;
-                        polyline.add(0, ls.getStart());
-                        polyline.add(1, ls.getEnd());
-
-                    }
-                }
-                closed = false;
-                bezier_mode = 0;
-                prev = p;
+                current.curveTo(interpretPosition(line));
 
             } else if (line.indexOf(' ', line.indexOf(' ') + 1) < 0) {
-                // point for curve (just one onespace on line)
-                if (bezier_mode == 0) {
-                    assert prev != null;
-                    bezier_mode = 1;
-                    if (polyline != null) {
-                        if (polyline.size() > 2) {
-                            complexgeos.add(new PolyLine(polyline));
-                            bezier_mode = 2;
-                        } else if (polyline.size() == 2) {
-                            complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
-                            bezier_mode = 2;
-                        }
-                    }
-                    polyline = new ArrayList();
-                    polyline.add(prev);
-                }
-                String[] coords = (line).split(" ");
-                Vector p = interpretPosition(coords[0], coords[1], m);
-                polyline.add(p);
-                prev = p;
+                // point for curve (just one whitespace on line)
+                current.blank(interpretPosition(line));
             } else {
                 Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected command: \"{0}\"", line);
             }
@@ -507,25 +400,16 @@ public class IPEReader extends BaseReader {
             line = _source.readLine();
         }
 
-        if (polyline != null) {
-            if (polyline.size() > 2) {
-                complexgeos.add(new PolyLine(polyline));
-            } else if (polyline.size() == 2) {
-                complexgeos.add(new LineSegment(polyline.get(0), polyline.get(1)));
-            }
+        if (current != null) {
+            finishedgeometries.add(current.end());
+            current = null;
         }
 
         BaseGeometry newgeom;
-        if (complexgeos.size() == 1) {
-            newgeom = complexgeos.get(0);
-        } else if (nummoves == 1) {
-            if (closed) {
-                newgeom = new GeometryCycle(complexgeos);
-            } else {
-                newgeom = new GeometryString(complexgeos);
-            }
+        if (finishedgeometries.size() == 1) {
+            newgeom = finishedgeometries.get(0);
         } else {
-            newgeom = new GeometryGroup(complexgeos);
+            newgeom = new GeometryGroup(finishedgeometries);
         }
 
         ReadItem item = new ReadItem();
@@ -538,6 +422,9 @@ public class IPEReader extends BaseReader {
         item.setStroke(stroke);
         item.setStrokewidth(strokewidth);
 
+        if (m != null) {
+            matrixstack.pop();
+        }
         return item;
     }
 
@@ -558,11 +445,14 @@ public class IPEReader extends BaseReader {
 
         double size = interpretSymbolSize(readAttribute(line, "size="));
         double[][] m = interpretMatrix(readAttribute(line, "matrix="));
+        if (m != null) {
+            matrixstack.push(m);
+        }
 
         Dashing dash = interpretDash(readAttribute(line, "dash="));
         double alpha = interpretTransparency(readAttribute(line, "opacity="));
 
-        Vector v = interpretPosition(readAttribute(line, "pos="), m);
+        Vector v = interpretPosition(readAttribute(line, "pos="));
 
         ReadItem item = new ReadItem();
 
@@ -575,6 +465,9 @@ public class IPEReader extends BaseReader {
         item.setStrokewidth(0.4 * size);
         item.setSymbolsize(size);
 
+        if (m != null) {
+            matrixstack.pop();
+        }
         return item;
     }
 
@@ -594,6 +487,9 @@ public class IPEReader extends BaseReader {
         }
 
         double[][] m = interpretMatrix(readAttribute(line, "matrix"));
+        if (m != null) {
+            matrixstack.push(m);
+        }
 
         List<BaseGeometry> parts = new ArrayList();
         String string = null;
@@ -621,7 +517,6 @@ public class IPEReader extends BaseReader {
 
             if (item != null) {
                 BaseGeometry geo = item.getGeometry();
-                applyMatrixToGeometry(geo, m);
                 parts.add(geo);
 
                 stroke = item.getStroke();
@@ -668,6 +563,9 @@ public class IPEReader extends BaseReader {
             item.setSymbolsize(size);
         }
 
+        if (m != null) {
+            matrixstack.pop();
+        }
         return item;
     }
 
@@ -678,7 +576,10 @@ public class IPEReader extends BaseReader {
 
         Color stroke = interpretColor(readAttribute(line, "stroke="));
         double[][] m = interpretMatrix(readAttribute(line, "matrix="));
-        Vector pos = interpretPosition(readAttribute(line, "pos="), m);
+        if (m != null) {
+            matrixstack.push(m);
+        }
+        Vector pos = interpretPosition(readAttribute(line, "pos="));
 
         double size = interpretTextSize(readAttribute(line, "size="));
         double alpha = interpretTransparency(readAttribute(line, "opacity="));
@@ -703,54 +604,10 @@ public class IPEReader extends BaseReader {
         item.setSymbolsize(size * (m == null ? 1 : m[0][0]));
         item.setAnchor(anchor);
 
+        if (m != null) {
+            matrixstack.pop();
+        }
         return item;
-    }
-
-    private void applyMatrixToGeometry(BaseGeometry geometry, double[][] matrix) {
-        if (matrix == null) {
-            return;
-        }
-
-        if (geometry instanceof Vector) {
-            Vector v = (Vector) geometry;
-            applyMatrixToPosition(v, matrix);
-        } else if (geometry instanceof LineSegment) {
-            LineSegment ls = (LineSegment) geometry;
-            applyMatrixToPosition(ls.getStart(), matrix);
-            applyMatrixToPosition(ls.getEnd(), matrix);
-        } else if (geometry instanceof PolyLine) {
-            PolyLine pl = (PolyLine) geometry;
-            for (Vector v : pl.vertices()) {
-                applyMatrixToPosition(v, matrix);
-            }
-        } else if (geometry instanceof Polygon) {
-            Polygon p = (Polygon) geometry;
-            for (Vector v : p.vertices()) {
-                applyMatrixToPosition(v, matrix);
-            }
-        } else if (geometry instanceof GeometryGroup) {
-            GeometryGroup<? extends BaseGeometry> g = (GeometryGroup) geometry;
-            for (BaseGeometry part : g.getParts()) {
-                applyMatrixToGeometry(part, matrix);
-            }
-        } else if (geometry instanceof GeometryCycle) {
-            GeometryCycle<? extends BaseGeometry> g = (GeometryCycle) geometry;
-            for (BaseGeometry part : g.edges()) {
-                applyMatrixToGeometry(part, matrix);
-            }
-        } else if (geometry instanceof GeometryString) {
-            GeometryString<? extends BaseGeometry> g = (GeometryString) geometry;
-            for (BaseGeometry part : g.edges()) {
-                applyMatrixToGeometry(part, matrix);
-            }
-        } else if (geometry instanceof BezierCurve) {
-            BezierCurve bc = (BezierCurve) geometry;
-            for (Vector v : bc.getControlpoints()) {
-                applyMatrixToGeometry(v, matrix);
-            }
-        } else {
-            Logger.getLogger(IPEReader.class.getName()).log(Level.WARNING, "Unexpected type in IPEReader: {0}", geometry.getClass().getName());
-        }
     }
 
     /**
@@ -975,7 +832,7 @@ public class IPEReader extends BaseReader {
      * @param attr Attribute value
      * @param matrix Matrix for transforming the (x,y) value
      */
-    private Vector interpretPosition(String attr, double[][] matrix) {
+    private Vector interpretPosition(String attr) {
         double x, y;
         if (attr == null) {
             x = 0;
@@ -987,7 +844,7 @@ public class IPEReader extends BaseReader {
         }
 
         Vector v = new Vector(x, y);
-        applyMatrixToPosition(v, matrix);
+        applyMatrixToPosition(v);
         return v;
     }
 
@@ -999,26 +856,25 @@ public class IPEReader extends BaseReader {
      * @param strY Y-coordinate as string
      * @param matrix Matrix for transforming the (x,y) value
      */
-    private Vector interpretPosition(String strX, String strY, double[][] matrix) {
+    private Vector interpretPosition(String strX, String strY) {
         double x, y;
 
         x = Double.parseDouble(strX);
         y = Double.parseDouble(strY);
 
         Vector v = new Vector(x, y);
-        applyMatrixToPosition(v, matrix);
+        applyMatrixToPosition(v);
         return v;
     }
 
     /**
-     * Applies a matrix transformation to the given position. If null is
-     * supplied as matrix, nothing happens.
+     * Applies all matrix transformations on the stack to the given position. 
      *
-     * @param position Position to which the matrix must be applied
-     * @param matrix 2x3 matrix describing the transformation or null
+     * @param position Position to which the matrices must be applied
      */
-    private void applyMatrixToPosition(Vector position, double[][] matrix) {
-        if (matrix != null) {
+    private void applyMatrixToPosition(Vector position) {      
+        for (int i = matrixstack.size() - 1; i >= 0; i--) {
+            double[][] matrix = matrixstack.get(i);
             position.set(
                     matrix[0][0] * position.getX() + matrix[0][1] * position.getY() + matrix[0][2],
                     matrix[1][0] * position.getX() + matrix[1][1] * position.getY() + matrix[1][2]
@@ -1078,12 +934,12 @@ public class IPEReader extends BaseReader {
      * @param line Line containing Circle description
      * @param matrix Matrix to be applied (if any)
      */
-    private Circle interpretCircle(String line, double[][] matrix) {
+    private Circle interpretCircle(String line) {
         String[] parts = line.split(" ");
         double r = Vector.subtract(
-                interpretPosition(parts[0], parts[1], matrix),
-                interpretPosition("0", "0", matrix)).length();
-        Vector c = interpretPosition(parts[4], parts[5], matrix);
+                interpretPosition(parts[0], parts[1]),
+                interpretPosition("0", "0")).length();
+        Vector c = interpretPosition(parts[4], parts[5]);
         return new Circle(c, r);
     }
 
@@ -1094,17 +950,17 @@ public class IPEReader extends BaseReader {
      * @param line Line containing CircularArc description
      * @param matrix Matrix to be applied (if any)
      */
-    private CircularArc interpretCircularArc(String line, Vector prev, double[][] matrix) {
+    private CircularArc interpretCircularArc(String line, Vector prev) {
         String[] parts = line.split(" ");
-        Vector origin = interpretPosition("0", "0", matrix);
+        Vector origin = interpretPosition("0", "0");
         Vector arm1 = Vector.subtract(
-                interpretPosition(parts[0], parts[1], matrix),
+                interpretPosition(parts[0], parts[1]),
                 origin);
         Vector arm2 = Vector.subtract(
-                interpretPosition(parts[2], parts[3], matrix),
+                interpretPosition(parts[2], parts[3]),
                 origin);
-        Vector center = interpretPosition(parts[4], parts[5], matrix);
-        Vector end = interpretPosition(parts[6], parts[7], matrix);
+        Vector center = interpretPosition(parts[4], parts[5]);
+        Vector end = interpretPosition(parts[6], parts[7]);
 
         CircularArc arc;
         if (Vector.crossProduct(arm1, arm2) > 0) {
@@ -1115,6 +971,112 @@ public class IPEReader extends BaseReader {
             // clockwise by default
         }
         return arc;
+    }
+
+    /**
+     * Subclass to handle reading one curve of mixed polygonal and curved parts
+     */
+    private class PathReader {
+
+        Vector _start;
+        Vector _end;
+        List<OrientedGeometry> _edges = new ArrayList();
+        List<Vector> _polyline = new ArrayList();
+        List<Vector> _controlpoints = null;
+
+        void move(Vector point) {
+            _polyline.add(point);
+            _start = _end = point;
+        }
+
+        void lineTo(Vector point) {
+            _polyline.add(point);
+            _end = point;
+        }
+
+        /**
+         * Shifts the polygonal representation to the edge list
+         */
+        void consolidate() {
+            switch (_polyline.size()) {
+                case 0:
+                case 1:
+                    // nothing to do
+                    break;
+                case 2:
+                    _edges.add(new LineSegment(_polyline.get(0), _polyline.get(1)));
+                    break;
+                default:
+                    _edges.add(new PolyLine(_polyline));
+                    break;
+            }
+            _polyline = new ArrayList();
+        }
+
+        void arcTo(CircularArc arc) {
+            consolidate();
+            _edges.add(arc);
+
+            _end = arc.getEnd();
+            _polyline.add(_end);
+        }
+
+        void blank(Vector point) {
+            if (_controlpoints == null) {
+                _controlpoints = new ArrayList();
+                _controlpoints.add(_end);
+            }
+            _controlpoints.add(point);
+        }
+
+        void curveTo(Vector point) {
+            _controlpoints.add(point);
+            _end = point;
+
+            BezierCurve curve = new BezierCurve(_controlpoints);
+            _controlpoints = null;
+
+            if (_bezierSampling < 0) {
+                consolidate();
+                _edges.add(curve);
+            } else {
+                for (int i = 1; i <= _bezierSampling; i++) {
+                    double t = i / (double) (_bezierSampling + 1);
+                    _polyline.add(curve.getPointAt(t));
+                }
+            }
+            _polyline.add(_end);
+        }
+
+        OrientedGeometry end() {    
+            // shift the last polygonal bit into the edge list        
+            consolidate();
+            if (_edges.size() == 1) {
+                // only one type of curve (single arc, single bezier, or single polyline)
+                return _edges.get(0);
+            } else {
+                return new GeometryString(_edges);
+            }
+        }
+
+        CyclicGeometry close() {
+            if (_edges.isEmpty()) {
+                // fully polygonal
+                if (_start.isApproximately(_end)) {
+                    // closed explicitly, trim
+                    _polyline.remove(_polyline.size() - 1);
+                }
+                return new Polygon(_polyline);
+            } else {
+                // mixed, create line back to start if necessary
+                if (!_start.isApproximately(_end)) {
+                    lineTo(_start);
+                }
+                // shift the last polygonal bit into the edge list
+                consolidate();
+                return new GeometryCycle(_edges);
+            }
+        }
     }
     //</editor-fold>
 }
