@@ -6,11 +6,15 @@
  */
 package nl.tue.geometrycore.graphs.simple;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryCloner;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
@@ -64,6 +68,8 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     // -------------------------------------------------------------------------
     private final List<TVertex> _vertices;
     private final List<TEdge> _edges;
+    private final Class _vertexClass;
+    private final Class _edgeClass;
 
     // -------------------------------------------------------------------------
     // CONSTRUCTORS
@@ -71,6 +77,10 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     public SimpleGraph() {
         _vertices = new ArrayList();
         _edges = new ArrayList();
+        _vertexClass = (Class) ((ParameterizedType) this.getClass().
+                getGenericSuperclass()).getActualTypeArguments()[1];
+        _edgeClass = (Class) ((ParameterizedType) this.getClass().
+                getGenericSuperclass()).getActualTypeArguments()[2];
     }
 
     // -------------------------------------------------------------------------
@@ -87,9 +97,25 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     // -------------------------------------------------------------------------
     // GRAPH ELEMENT CONSTRUCTORS
     // -------------------------------------------------------------------------
-    public abstract TVertex createVertex(double x, double y);
+    public TVertex createVertex() {
+        try {
+            TVertex instance = (TVertex) _vertexClass.newInstance();
+            return instance;
+        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
 
-    public abstract TEdge createEdge();
+    public TEdge createEdge() {
+        try {
+            TEdge instance = (TEdge) _edgeClass.newInstance();
+            return instance;
+        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
 
     // -------------------------------------------------------------------------
     // GRAPH MODIFICATIONS
@@ -186,7 +212,8 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     }
 
     public TVertex addVertex(double x, double y) {
-        TVertex vertex = createVertex(x, y);
+        TVertex vertex = createVertex();
+        vertex.set(x, y);
 
         vertex._graphIndex = _vertices.size();
         _vertices.add(vertex);
@@ -232,23 +259,23 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
 
         vertex._graphIndex = -1;
     }
-    
+
     public void clear() {
-        
+
         clearEdges();
-        
-        int n = _vertices.size()-1;
+
+        int n = _vertices.size() - 1;
         while (n >= 0) {
             removeVertex(_vertices.get(n));
             n--;
         }
     }
-    
+
     public void clearEdges() {
-        
+
         int n = _edges.size();
         while (n > 0) {
-            removeEdge(_edges.get(n-1));
+            removeEdge(_edges.get(n - 1));
             n--;
         }
     }

@@ -64,7 +64,8 @@ public class GraphConstruction {
         // make vertices
         for (TSimpleVertex vertex : graph.getVertices()) {
 
-            TDCELVertex dcelvertex = dcel.createVertex(vertex.getX(), vertex.getY());
+            TDCELVertex dcelvertex = dcel.createVertex();
+            dcelvertex.set(vertex);
             dcel.addVertexToVertexList(dcelvertex);
             vertexMap.put(vertex, dcelvertex);
 
@@ -523,18 +524,6 @@ public class GraphConstruction {
                     Map<GeometryConvertable, List<TDCELDart>> edgeMap, Map<TDCELDart, List<GeometryConvertable>> edgeBackmap) {
 
         SimpleGraph sg = new SimpleGraph() {
-
-            @Override
-            public SimpleVertex createVertex(double x, double y) {
-                return new SimpleVertex(x, y) {
-                };
-            }
-
-            @Override
-            public SimpleEdge createEdge() {
-                return new SimpleEdge() {
-                };
-            }
         };
 
         Map<GeometryConvertable, List<SimpleVertex>> geomgraph_vertexMap;

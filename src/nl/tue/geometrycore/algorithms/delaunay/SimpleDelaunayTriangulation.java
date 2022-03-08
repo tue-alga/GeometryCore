@@ -60,26 +60,11 @@ public class SimpleDelaunayTriangulation<TVector extends Vector> {
 
     private class IGraph extends SimpleGraph<LineSegment, IVertex, IEdge> {
 
-        @Override
-        public IVertex createVertex(double x, double y) {
-            return new IVertex(x, y);
-        }
-
-        @Override
-        public IEdge createEdge() {
-            return new IEdge();
-        }
-
     }
 
     private class IVertex extends SimpleVertex<LineSegment, IVertex, IEdge> {
 
         private TVector original;
-
-        public IVertex(double x, double y) {
-            super(x, y);
-        }
-
     }
 
     private class IEdge extends SimpleEdge<LineSegment, IVertex, IEdge> {

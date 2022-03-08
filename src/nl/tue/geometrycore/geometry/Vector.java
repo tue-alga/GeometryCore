@@ -24,6 +24,14 @@ public class Vector extends BaseGeometry<Vector> {
 
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
     /**
+     * Constructs a new vector at the origin.
+     */
+    public Vector() {
+        _x = 0;
+        _y = 0;
+    }
+    
+    /**
      * Constructs a new vector with given X- and Y-coordinate
      *
      * @param x the X-coordinate

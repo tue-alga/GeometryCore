@@ -30,7 +30,6 @@ public abstract class DCELDart<TGeom extends OrientedGeometry, TVertex extends D
         _graphIndex = -1;
     }
     
-    
     public int getGraphIndex() {
         return _graphIndex;
     }

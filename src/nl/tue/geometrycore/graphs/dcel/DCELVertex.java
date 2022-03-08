@@ -21,6 +21,10 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
 
     boolean _marked;
     int _graphIndex;
+    
+    protected DCELVertex() {
+        this(0,0);
+    }
 
     protected DCELVertex(Vector position) {
         this(position.getX(), position.getY());

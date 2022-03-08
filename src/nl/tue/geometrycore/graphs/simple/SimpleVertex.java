@@ -29,6 +29,10 @@ public abstract class SimpleVertex<TGeom extends OrientedGeometry<TGeom>, TVerte
 
     final List<TEdge> _edges;
     int _graphIndex; // package-private
+    
+    public SimpleVertex() {
+        this(0,0);
+    }
 
     public SimpleVertex(Vector position) {
         this(position.getX(), position.getY());

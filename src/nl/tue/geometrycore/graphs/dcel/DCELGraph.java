@@ -6,10 +6,14 @@
  */
 package nl.tue.geometrycore.graphs.dcel;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
+import nl.tue.geometrycore.graphs.simple.SimpleGraph;
 
 /**
  *
@@ -28,6 +32,9 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry, TVertex extends 
     final List<TFace> _faces; // NB: face 0 will always be the general outerface
     final List<TDart> _darts; // NB: saves only one of two darts representing an edge
     final List<TVertex> _vertices;
+    private final Class _vertexClass;
+    private final Class _edgeClass;
+    private final Class _faceClass;
 
     // -------------------------------------------------------------------------
     // CONSTRUCTORS
@@ -36,6 +43,12 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry, TVertex extends 
         _faces = new ArrayList<TFace>();
         _darts = new ArrayList<TDart>();
         _vertices = new ArrayList<TVertex>();
+        _vertexClass = (Class) ((ParameterizedType) this.getClass().
+                getGenericSuperclass()).getActualTypeArguments()[1];
+        _edgeClass = (Class) ((ParameterizedType) this.getClass().
+                getGenericSuperclass()).getActualTypeArguments()[2];
+        _faceClass = (Class) ((ParameterizedType) this.getClass().
+                getGenericSuperclass()).getActualTypeArguments()[3];
 
         initializeOuterFace();
     }
@@ -64,11 +77,37 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry, TVertex extends 
     // -------------------------------------------------------------------------
     // ABSTRACT METHODS
     // -------------------------------------------------------------------------
-    public abstract TVertex createVertex(double x, double y);
+    public TVertex createVertex() {
+        try {
+            TVertex instance = (TVertex) _vertexClass.newInstance();
+            return instance;
+        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
 
-    public abstract TDart createDart();
+    public TDart createDart() {
+        try {
+            TDart instance = (TDart) _edgeClass.newInstance();
+            return instance;
+        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+    
+    
 
-    public abstract TFace createFace();
+    public TFace createFace() {
+        try {
+            TFace instance = (TFace) _edgeClass.newInstance();
+            return instance;
+        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
 
     // -------------------------------------------------------------------------
     // GRAPH ADDITIONS
@@ -78,7 +117,8 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry, TVertex extends 
     }
 
     public TVertex addVertex(double x, double y) {
-        TVertex vertex = createVertex(x, y);
+        TVertex vertex = createVertex();
+        vertex.set(x,y);
 
         addVertexToVertexList(vertex);
 
@@ -113,7 +153,8 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry, TVertex extends 
 
         // create a new vertex
         // NB: no need to find enclosing face, as we're using it to split an edge
-        TVertex splitvertex = createVertex(position.getX(), position.getY());
+        TVertex splitvertex = createVertex();
+        splitvertex.set(position);
 
         splitvertex._graphIndex = _vertices.size();
         _vertices.add(splitvertex);
