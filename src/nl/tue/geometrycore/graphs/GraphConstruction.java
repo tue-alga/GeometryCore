@@ -36,7 +36,7 @@ import nl.tue.geometrycore.graphs.simple.SimpleVertex;
 import nl.tue.geometrycore.util.DoubleUtil;
 
 /**
- * 
+ *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
 public class GraphConstruction {
@@ -505,25 +505,37 @@ public class GraphConstruction {
     // -------------------------------------------------------------------------
     // GEOMETRY -> DCEL
     // -------------------------------------------------------------------------
-    public static <TDCELGeom extends OrientedGeometry, TDCELGraph extends DCELGraph<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELVertex extends DCELVertex<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELDart extends DCELDart<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELFace extends DCELFace<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>>
+    public static <TDCELGeom extends OrientedGeometry<TDCELGeom>, TDCELGraph extends DCELGraph<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELVertex extends DCELVertex<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELDart extends DCELDart<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELFace extends DCELFace<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>>
             void convertGeometriesToDCEL(TDCELGraph graph, List<? extends GeometryConvertable> geometries,
                     GeometryCloner<OrientedGeometry, TDCELGeom> cloner) {
         convertGeometriesToDCEL(graph, geometries, DoubleUtil.EPS, cloner, null, null, null, null);
     }
 
-    public static <TDCELGeom extends OrientedGeometry, TDCELGraph extends DCELGraph<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELVertex extends DCELVertex<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELDart extends DCELDart<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELFace extends DCELFace<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>>
+    public static <TDCELGeom extends OrientedGeometry<TDCELGeom>, TDCELGraph extends DCELGraph<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELVertex extends DCELVertex<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELDart extends DCELDart<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELFace extends DCELFace<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>>
             void convertGeometriesToDCEL(TDCELGraph graph, List<? extends GeometryConvertable> geometries, double precision,
                     GeometryCloner<OrientedGeometry, TDCELGeom> cloner) {
         convertGeometriesToDCEL(graph, geometries, precision, cloner, null, null, null, null);
     }
 
-    public static <TDCELGeom extends OrientedGeometry, TDCELGraph extends DCELGraph<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELVertex extends DCELVertex<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELDart extends DCELDart<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELFace extends DCELFace<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>>
+    public static <TDCELGeom extends OrientedGeometry<TDCELGeom>, TDCELGraph extends DCELGraph<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELVertex extends DCELVertex<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELDart extends DCELDart<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>, TDCELFace extends DCELFace<TDCELGeom, TDCELVertex, TDCELDart, TDCELFace>>
             void convertGeometriesToDCEL(TDCELGraph graph, List<? extends GeometryConvertable> geometries, double precision,
                     GeometryCloner<OrientedGeometry, TDCELGeom> cloner,
                     Map<GeometryConvertable, List<TDCELVertex>> vertexMap, Map<TDCELVertex, List<GeometryConvertable>> vertexBackmap,
                     Map<GeometryConvertable, List<TDCELDart>> edgeMap, Map<TDCELDart, List<GeometryConvertable>> edgeBackmap) {
 
-        SimpleGraph sg = new SimpleGraph() {
+        SimpleGraph sg = new SimpleGraph(false) {
+            @Override
+            public SimpleEdge createEdge() {
+                return new SimpleEdge() {
+                };
+            }
+
+            @Override
+            public SimpleVertex createVertex() {
+                return new SimpleVertex() {
+                };
+            }
+
         };
 
         Map<GeometryConvertable, List<SimpleVertex>> geomgraph_vertexMap;

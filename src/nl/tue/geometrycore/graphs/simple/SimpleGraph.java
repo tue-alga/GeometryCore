@@ -6,7 +6,6 @@
  */
 package nl.tue.geometrycore.graphs.simple;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,13 +73,33 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     // -------------------------------------------------------------------------
     // CONSTRUCTORS
     // -------------------------------------------------------------------------
+    /**
+     * Constructs a simple graph. With this constructor, reflection is used to
+     * create new vertices and edges.
+     */
     public SimpleGraph() {
+        this(true);
+    }
+
+    /**
+     * Constructs a simple graph. Configurable to use reflection when creating
+     * new vertices and edges. If set to false, override createVertex and
+     * createEdge methods.
+     *
+     * @param reflection
+     */
+    public SimpleGraph(boolean reflection) {
         _vertices = new ArrayList();
         _edges = new ArrayList();
-        _vertexClass = (Class) ((ParameterizedType) this.getClass().
-                getGenericSuperclass()).getActualTypeArguments()[1];
-        _edgeClass = (Class) ((ParameterizedType) this.getClass().
-                getGenericSuperclass()).getActualTypeArguments()[2];
+        if (reflection) {
+            _vertexClass = (Class) ((ParameterizedType) this.getClass().
+                    getGenericSuperclass()).getActualTypeArguments()[1];
+            _edgeClass = (Class) ((ParameterizedType) this.getClass().
+                    getGenericSuperclass()).getActualTypeArguments()[2];
+        } else {
+            _vertexClass = null;
+            _edgeClass = null;
+        }
     }
 
     // -------------------------------------------------------------------------

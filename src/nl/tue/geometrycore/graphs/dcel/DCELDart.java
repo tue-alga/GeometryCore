@@ -13,7 +13,7 @@ import nl.tue.geometrycore.geometry.OrientedGeometry;
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public abstract class DCELDart<TGeom extends OrientedGeometry, TVertex extends DCELVertex<TGeom, TVertex, TDart, TFace>, TDart extends DCELDart<TGeom, TVertex, TDart, TFace>, TFace extends DCELFace<TGeom, TVertex, TDart, TFace>>
+public abstract class DCELDart<TGeom extends OrientedGeometry<TGeom>, TVertex extends DCELVertex<TGeom, TVertex, TDart, TFace>, TDart extends DCELDart<TGeom, TVertex, TDart, TFace>, TFace extends DCELFace<TGeom, TVertex, TDart, TFace>>
         implements GeometryConvertable<TGeom> {
 
     TGeom _geometry;

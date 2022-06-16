@@ -14,16 +14,16 @@ import nl.tue.geometrycore.geometry.Vector;
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends DCELVertex<TGeom, TVertex, TDart, TFace>, TDart extends DCELDart<TGeom, TVertex, TDart, TFace>, TFace extends DCELFace<TGeom, TVertex, TDart, TFace>> extends Vector {
+public abstract class DCELVertex<TGeom extends OrientedGeometry<TGeom>, TVertex extends DCELVertex<TGeom, TVertex, TDart, TFace>, TDart extends DCELDart<TGeom, TVertex, TDart, TFace>, TFace extends DCELFace<TGeom, TVertex, TDart, TFace>> extends Vector {
 
     TDart _dart;
     TFace _floatingInFace;
 
     boolean _marked;
     int _graphIndex;
-    
+
     protected DCELVertex() {
-        this(0,0);
+        this(0, 0);
     }
 
     protected DCELVertex(Vector position) {
@@ -42,6 +42,9 @@ public abstract class DCELVertex<TGeom extends OrientedGeometry, TVertex extends
     }
 
     public void updateIncidentEdges() {
+        if (_dart == null) {
+            return;
+        }
         TDart walk = _dart;
         do {
             walk.getGeometry().updateStart(this);

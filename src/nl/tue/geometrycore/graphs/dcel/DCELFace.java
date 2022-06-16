@@ -22,7 +22,7 @@ import nl.tue.geometrycore.util.DoubleUtil;
  * @param <TFace>
  * @param <TDart>
  */
-public abstract class DCELFace<TGeom extends OrientedGeometry, TVertex extends DCELVertex<TGeom, TVertex, TDart, TFace>, TDart extends DCELDart<TGeom, TVertex, TDart, TFace>, TFace extends DCELFace<TGeom, TVertex, TDart, TFace>> {
+public abstract class DCELFace<TGeom extends OrientedGeometry<TGeom>, TVertex extends DCELVertex<TGeom, TVertex, TDart, TFace>, TDart extends DCELDart<TGeom, TVertex, TDart, TFace>, TFace extends DCELFace<TGeom, TVertex, TDart, TFace>> {
 
     // general info
     TDart _dart;
