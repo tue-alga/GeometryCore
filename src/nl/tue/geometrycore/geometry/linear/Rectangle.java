@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.CyclicGeometry;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
+import nl.tue.geometrycore.geometry.GeometryExtractor;
 import nl.tue.geometrycore.geometry.GeometryType;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.curved.Circle;
@@ -150,6 +151,34 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
     public static Rectangle byBoundingBox(List<? extends GeometryConvertable> include) {
         Rectangle result = new Rectangle();
         result.includeGeometry(include);
+        return result;
+    }
+
+    /**
+     * Computes the smallest enclosing rectangle for the provided geometries.
+     *
+     * @param <TObject> Type of object to include
+     * @param ex Method to describe how to obtain geometry from the object
+     * @param include geometries to include in this computation
+     * @return smallest enclosing rectangle
+     */
+    public static <TObject> Rectangle byBoundingBox(GeometryExtractor<TObject, ? extends GeometryConvertable> ex, TObject... include) {
+        return byBoundingBox(ex, Arrays.asList(include));
+    }
+
+    /**
+     * Computes the smallest enclosing rectangle for the provided geometries.
+     *
+     * @param <TObject> Type of object to include
+     * @param ex Method to describe how to obtain geometry from the object
+     * @param include geometries to include in this computation
+     * @return smallest enclosing rectangle
+     */
+    public static <TObject> Rectangle byBoundingBox(GeometryExtractor<TObject, ? extends GeometryConvertable> ex, List<? extends TObject> include) {
+        Rectangle result = new Rectangle();
+        for (TObject obj : include) {
+            result.includeGeometry(ex.extract(obj));
+        }
         return result;
     }
     //</editor-fold>
@@ -314,7 +343,7 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
 
     public boolean containsCompletely(BaseGeometry geom, double prec) {
         Rectangle R = Rectangle.byBoundingBox(geom);
-        return contains(R.leftBottom(), prec) && contains(R.rightBottom());
+        return contains(R.leftBottom(), prec) && contains(R.rightTop());
     }
 
     public boolean overlaps(Rectangle rect) {
