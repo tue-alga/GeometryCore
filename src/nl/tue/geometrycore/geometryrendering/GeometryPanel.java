@@ -129,7 +129,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     /**
      *
      * @return true if both zooming and panning are enabled
-     * @deprecated Replaced by isZoomingEnabled and isPanningEnabled.
+     * @Deprecated Replaced by isZoomingEnabled and isPanningEnabled.
      */
     public boolean isDefaultInteractionEnabled() {
         return _zoomingEnabled && _panningEnabled;
@@ -137,7 +137,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
 
     /**
      *
-     * @deprecated Replaced by setZoomingEnabled and setPanningEnabled.
+     * @Deprecated Replaced by setZoomingEnabled and setPanningEnabled.
      */
     public void setDefaultInteractionEnabled(boolean enableDefaultInteraction) {
         setPanningEnabled(enableDefaultInteraction);
