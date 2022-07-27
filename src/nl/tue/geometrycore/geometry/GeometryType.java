@@ -19,260 +19,9 @@ public enum GeometryType {
      * For instances of {@link nl.tue.geometrycore.geometry.Vector}.
      */
     VECTOR {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.linear.LineSegment}.
-     */
-    LINESEGMENT {
-                @Override
-                public boolean isOrientable() {
-                    return true;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.linear.HalfLine}.
-     */
-    HALFLINE {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return true;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.linear.Line}.
-     */
-    LINE {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return true;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.linear.PolyLine}.
-     */
-    POLYLINE {
-                @Override
-                public boolean isOrientable() {
-                    return true;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.linear.Polygon}.
-     */
-    POLYGON {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return true;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.linear.Rectangle}.
-     */
-    RECTANGLE {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return true;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.curved.CircularArc}.
-     */
-    CIRCULARARC {
-                @Override
-                public boolean isOrientable() {
-                    return true;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.curved.Circle}.
-     */
-    CIRCLE {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return true;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of {@link nl.tue.geometrycore.geometry.curved.Ellipse}.
-     */
-    ELLIPSE {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return true;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of
-     * {@link nl.tue.geometrycore.geometry.mixed.GeometryCycle}.
-     */
-    GEOMETRYCYCLE {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return true;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of
-     * {@link nl.tue.geometrycore.geometry.mixed.GeometryString}.
-     */
-    GEOMETRYSTRING {
-                @Override
-                public boolean isOrientable() {
-                    return true;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of
-     * {@link nl.tue.geometrycore.geometry.mixed.GeometryGroup}.
-     */
-    GEOMETRYGROUP {
-                @Override
-                public boolean isOrientable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isCyclic() {
-                    return false;
-                }
-
-                @Override
-                public boolean isInfinite() {
-                    return false;
-                }
-            },
-    /**
-     * For instances of
-     * {@link nl.tue.geometrycore.geometry.curved.BezierCurve}.
-     */
-    BEZIERCURVE {
         @Override
         public boolean isOrientable() {
-        return true;
+            return false;
         }
 
         @Override
@@ -284,9 +33,319 @@ public enum GeometryType {
         public boolean isInfinite() {
             return false;
         }
-        
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.linear.LineSegment}.
+     */
+    LINESEGMENT {
+        @Override
+        public boolean isOrientable() {
+            return true;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.linear.HalfLine}.
+     */
+    HALFLINE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return true;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.linear.Line}.
+     */
+    LINE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return true;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.linear.PolyLine}.
+     */
+    POLYLINE {
+        @Override
+        public boolean isOrientable() {
+            return true;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.linear.Polygon}.
+     */
+    POLYGON {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return true;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.linear.Rectangle}.
+     */
+    RECTANGLE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return true;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.CircularArc}.
+     */
+    CIRCULARARC {
+        @Override
+        public boolean isOrientable() {
+            return true;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.Circle}.
+     */
+    CIRCLE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return true;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.Ellipse}.
+     */
+    ELLIPSE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return true;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of
+     * {@link nl.tue.geometrycore.geometry.mixed.GeometryCycle}.
+     */
+    GEOMETRYCYCLE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return true;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of
+     * {@link nl.tue.geometrycore.geometry.mixed.GeometryString}.
+     */
+    GEOMETRYSTRING {
+        @Override
+        public boolean isOrientable() {
+            return true;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of
+     * {@link nl.tue.geometrycore.geometry.mixed.GeometryGroup}.
+     */
+    GEOMETRYGROUP {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.BezierCurve}.
+     */
+    BEZIERCURVE {
+        @Override
+        public boolean isOrientable() {
+            return true;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.ParabolicSegment}.
+     */
+    PARABOLICSEGMENT {
+        @Override
+        public boolean isOrientable() {
+            return true;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return false;
+        }
+
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.ParabolicHalfLine}.
+     */
+    PARABOLICHALFLINE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return true;
+        }
+
+    },
+    /**
+     * For instances of {@link nl.tue.geometrycore.geometry.curved.ParabolicLine}.
+     */
+    PARABOLICLINE {
+        @Override
+        public boolean isOrientable() {
+            return false;
+        }
+
+        @Override
+        public boolean isCyclic() {
+            return false;
+        }
+
+        @Override
+        public boolean isInfinite() {
+            return true;
+        }
+
     };
-    
+
     /**
      * Checks whether the geometry inherits from {@link OrientableGeometry}. In
      * other words, does it have a start and endpoint?

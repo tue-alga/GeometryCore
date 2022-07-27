@@ -6,6 +6,8 @@
  */
 package nl.tue.geometrycore.util;
 
+import java.util.Arrays;
+
 /**
  * Utility class with convenience methods for dealing with double values, in
  * particular, focused on handling imprecision.
@@ -180,6 +182,173 @@ public class DoubleUtil {
                     return Double.NaN;
                 }
         }
+    }
+
+    /**
+     * Returns the four possibly complex solutions of a*x^4 + b*x^3 + c*x^2 +d*x
+     * + e = 0. This function implements Ferrari's method.
+     *
+     * @param a factor for quartic term
+     * @param b factor for cubic term
+     * @param c factor for quadratic term
+     * @param d factor for linear term
+     * @param e factor for constant term
+     *
+     * @return an array with the four complex solutions to the quartic equation
+     */
+    public static Complex[] solveQuarticEquation(double a, double b, double c, double d, double e) {
+
+        Complex[] xs = new Complex[4];
+
+        double alpha = -3 * Math.pow(b, 2) / (8 * Math.pow(a, 2)) + c / a;
+        double beta = Math.pow(b, 3) / (8 * Math.pow(a, 3)) - b * c / (2 * Math.pow(a, 2)) + d / a;
+        double gamma = -3 * Math.pow(b, 4) / (256 * Math.pow(a, 4)) + c * Math.pow(b, 2) / (16 * Math.pow(a, 3)) - b * d / (4 * Math.pow(a, 2)) + e / a;
+
+        if (DoubleUtil.close(beta, 0)) {
+            xs[0] = Complex.add(-b / (4 * a), Complex.squareroot((-alpha + Math.sqrt(Math.pow(alpha, 2) - 4 * gamma)) / 2.0));
+            xs[1] = Complex.add(-b / (4 * a), Complex.squareroot((-alpha - Math.sqrt(Math.pow(alpha, 2) - 4 * gamma)) / 2.0));
+            xs[2] = Complex.subtract(-b / (4 * a), Complex.squareroot((-alpha + Math.sqrt(Math.pow(alpha, 2) - 4 * gamma)) / 2.0));
+            xs[3] = Complex.subtract(-b / (4 * a), Complex.squareroot((-alpha - Math.sqrt(Math.pow(alpha, 2) - 4 * gamma)) / 2.0));
+        } else {
+
+            double P = -Math.pow(alpha, 2) / 12 - gamma;
+            double Q = -Math.pow(alpha, 3) / 108 + alpha * gamma / 3 - Math.pow(beta, 2) / 8;
+            Complex R = Complex.add(
+                    -Q / 2,
+                    Complex.squareroot(Math.pow(Q, 2) / 4 + Math.pow(P, 3) / 27));
+
+            Complex U = Complex.cuberoot(R);
+
+            Complex y = Complex.add(
+                    -5 * alpha / 6,
+                    U.isZero()
+                    ? Complex.subtract(0, Complex.cuberoot(Q))
+                    : Complex.subtract(U, Complex.divide(P, Complex.multiply(3, U))));
+
+            Complex W = Complex.squareroot(Complex.add(alpha, Complex.multiply(2, y)));
+
+            xs[0] = Complex.add(
+                    -b / (4 * a),
+                    Complex.divide(
+                            Complex.add(
+                                    W,
+                                    Complex.squareroot(
+                                            Complex.subtract(0,
+                                                    Complex.add(3 * alpha,
+                                                            Complex.add(
+                                                                    Complex.multiply(2, y),
+                                                                    Complex.divide(2 * beta, W)
+                                                            )
+                                                    )
+                                            )
+                                    )
+                            ),
+                            2));
+            xs[1] = Complex.add(
+                    -b / (4 * a),
+                    Complex.divide(
+                            Complex.subtract(
+                                    W,
+                                    Complex.squareroot(
+                                            Complex.subtract(0,
+                                                    Complex.add(3 * alpha,
+                                                            Complex.add(
+                                                                    Complex.multiply(2, y),
+                                                                    Complex.divide(2 * beta, W)
+                                                            )
+                                                    )
+                                            )
+                                    )
+                            ),
+                            2));
+            xs[2] = Complex.add(
+                    -b / (4 * a),
+                    Complex.divide(
+                            Complex.add(
+                                    Complex.subtract(0, W),
+                                    Complex.squareroot(
+                                            Complex.subtract(0,
+                                                    Complex.add(3 * alpha,
+                                                            Complex.subtract(
+                                                                    Complex.multiply(2, y),
+                                                                    Complex.divide(2 * beta, W)
+                                                            )
+                                                    )
+                                            )
+                                    )
+                            ),
+                            2));
+            xs[3] = Complex.add(
+                    -b / (4 * a),
+                    Complex.divide(
+                            Complex.subtract(
+                                    Complex.subtract(0, W),
+                                    Complex.squareroot(
+                                            Complex.subtract(0,
+                                                    Complex.add(3 * alpha,
+                                                            Complex.subtract(
+                                                                    Complex.multiply(2, y),
+                                                                    Complex.divide(2 * beta, W)
+                                                            )
+                                                    )
+                                            )
+                                    )
+                            ),
+                            2));
+        }
+
+        // DEBUG CODE: |Ftests the roots
+//        for (Complex v : result) {
+//            Complex r = Complex.add(
+//                    Complex.multiply(a, Complex.quart(v)),
+//                    Complex.add(Complex.multiply(b, Complex.cube(v)),
+//                            Complex.add(Complex.multiply(c, Complex.square(v)),
+//                                    Complex.add(Complex.multiply(d, v),
+//                                            e))));
+//            if (r.isZero()) {
+//                System.out.println("x = " + v + " --> OK");
+//            } else {
+//                System.out.println("x = " + v + " --> " + r);
+//            }
+//        }
+        return xs;
+    }
+
+    /**
+     * Returns the real roots of a*x^4 + b*x^3 + c*x^2 +d*x + e = 0
+     *
+     * @param a factor for quartic term
+     * @param b factor for cubic term
+     * @param c factor for quadratic term
+     * @param d factor for linear term
+     * @param e factor for constant term
+     *
+     * @return an array with up to four real solutions to the quartic equation,
+     * sorted by increasing values of x
+     */
+    public static double[] solveQuarticEquationReal(double a, double b, double c, double d, double e) {
+
+        Complex[] cxs = solveQuarticEquation(a, b, c, d, e);
+
+        int r = 0;
+        for (Complex cx : cxs) {
+            if (cx.isReal()) {
+                r++;
+            }
+        }
+
+        double[] xs = new double[r];
+        r--;
+        for (Complex cx : cxs) {
+            if (cx.isReal()) {
+                xs[r] = cx.getRe();
+                r--;
+            }
+        }
+
+        Arrays.sort(xs);
+
+        return xs;
     }
     //</editor-fold>    
 }

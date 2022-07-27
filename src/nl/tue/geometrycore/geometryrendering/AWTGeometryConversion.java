@@ -25,6 +25,7 @@ import nl.tue.geometrycore.geometry.curved.BezierCurve;
 import nl.tue.geometrycore.geometry.curved.Circle;
 import nl.tue.geometrycore.geometry.curved.CircularArc;
 import nl.tue.geometrycore.geometry.curved.Ellipse;
+import nl.tue.geometrycore.geometry.curved.ParabolicSegment;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
 import nl.tue.geometrycore.geometry.linear.PolyLine;
 import nl.tue.geometrycore.geometry.linear.Polygon;
@@ -85,6 +86,16 @@ public class AWTGeometryConversion {
                 return null;
             case BEZIERCURVE:
                 return toShape((BezierCurve) geom);
+            case PARABOLICSEGMENT:
+                return toShape(((ParabolicSegment) geom).toQuadraticBezier());
+            case PARABOLICHALFLINE:
+                Logger.getLogger(AWTGeometryConversion.class.getClass().getName()).log(Level.WARNING,
+                        "Still an infinite geometry, despite of clipping?");
+                return null;
+            case PARABOLICLINE:
+                Logger.getLogger(AWTGeometryConversion.class.getClass().getName()).log(Level.WARNING,
+                        "Still an infinite geometry, despite of clipping?");
+                return null;
             default:
                 Logger.getLogger(AWTGeometryConversion.class.getClass().getName()).log(Level.WARNING,
                         "Unexpected geometry type: {0}", geom.getGeometryType());

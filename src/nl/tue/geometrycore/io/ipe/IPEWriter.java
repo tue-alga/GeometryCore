@@ -29,6 +29,7 @@ import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.curved.BezierCurve;
 import nl.tue.geometrycore.geometry.curved.Circle;
 import nl.tue.geometrycore.geometry.curved.CircularArc;
+import nl.tue.geometrycore.geometry.curved.ParabolicSegment;
 import nl.tue.geometrycore.geometry.linear.LineSegment;
 import nl.tue.geometrycore.geometry.linear.PolyLine;
 import nl.tue.geometrycore.geometry.linear.Polygon;
@@ -681,6 +682,9 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
                         renderComposite(geom);
                         break;
                     }
+                    case PARABOLICSEGMENT:
+                        renderGeometry(((ParabolicSegment) geom).toQuadraticBezier());
+                        break;
                     default: {
                         renderGeometry(geom);
                         break;
