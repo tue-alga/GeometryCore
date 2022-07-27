@@ -212,16 +212,6 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
     }
 
     @Override
-    public double getMinimumParameter() {
-        return 0;
-    }
-
-    @Override
-    public double getMaximumParameter() {
-        return 1;
-    }
-
-    @Override
     public Vector getPointAt(double t) {
         if (_center == null) {
             Vector v = Vector.subtract(_end, _start);

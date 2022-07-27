@@ -17,11 +17,14 @@ import nl.tue.geometrycore.geometry.linear.PolyLine;
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
 public abstract class ParameterizedCurve<TActual extends ParameterizedCurve> extends OrientedGeometry<TActual> {
+   
+    public double getMinimumParameter() {
+        return 0;
+    }
 
-
-    public abstract double getMinimumParameter();
-    
-    public abstract double getMaximumParameter();
+    public double getMaximumParameter() {
+        return 1;
+    }
     
     public PolyLine getApproximation(int points) {
         List<Vector> vs = new ArrayList(points);

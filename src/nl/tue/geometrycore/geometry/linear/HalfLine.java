@@ -43,8 +43,8 @@ public class HalfLine extends BaseGeometry<HalfLine> implements InfiniteGeometry
     }
 
     /**
-     * Computes a line, by providing two points through which it passes. Note
-     * that the first provided point (origin) is used to define the line.
+     * Computes a halfline, by providing two points through which it passes.
+     * Note that the first provided point (origin) is used to define the line.
      *
      * @param origin startpoint of the halfline
      * @param through the halfline must pass through this point
@@ -53,6 +53,19 @@ public class HalfLine extends BaseGeometry<HalfLine> implements InfiniteGeometry
     public static HalfLine byThroughpoint(Vector origin, Vector through) {
         final Vector delta = Vector.subtract(through, origin);
         return new HalfLine(origin, delta);
+    }
+
+    /**
+     * Computes a halfline, starting at the starting point of the given line
+     * segment, and in the same direction.Note: the starting point vector is
+     * reused in defining the halfline.
+     *
+     * @param segment the line segment to be spanned
+     * @return constructed halfline
+     */
+    public static HalfLine spannedBy(LineSegment segment) {
+        // using subtraction here instead of getDirection() to avoid normalizing twice
+        return new HalfLine(segment.getStart(), Vector.subtract(segment.getStart(), segment.getEnd()));
     }
     //</editor-fold>
 

@@ -108,6 +108,49 @@ public class IPEReader extends BaseReader {
         return stringReader(ClipboardUtil.getClipboardContents());
     }
     //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="STATIC">    
+    /**
+     * Reads the first geometry found in the file. 
+     *
+     * @param file the ipe file to be read
+     * @return the first geometry found, or null of no geometries were found
+     * @throws IOException
+     */
+    public static BaseGeometry readSingleGeometry(File file) throws IOException {
+        IPEReader read = IPEReader.fileReader(file);
+        List<ReadItem> items = read.read();
+        read.close();        
+        return items.isEmpty() ? null : items.get(0).toGeometry();
+    }
+
+   /**
+     * Reads the first geometry found in the string. 
+     *
+     * @param string the ipe string to be read
+     * @return the first geometry found, or null of no geometries were found
+     * @throws IOException
+     */
+    public static BaseGeometry readSingleGeometry(String string) throws IOException {
+        IPEReader read = IPEReader.stringReader(string);
+        List<ReadItem> items = read.read();
+        read.close();        
+        return items.isEmpty() ? null : items.get(0).toGeometry();
+    }
+    
+    /**
+     * Reads the first geometry found on the clipboard. 
+     *
+     * @return the first geometry found, or null of no geometries were found
+     * @throws IOException
+     */
+    public static BaseGeometry readSingleGeometry() throws IOException {
+        IPEReader read = IPEReader.clipboardReader();
+        List<ReadItem> items = read.read();
+        read.close();        
+        return items.isEmpty() ? null : items.get(0).toGeometry();
+    }
+    //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
     @Override
@@ -312,6 +355,7 @@ public class IPEReader extends BaseReader {
     }
 
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">    
     /**
      * Reads the value of a given XML attribute in a given line.

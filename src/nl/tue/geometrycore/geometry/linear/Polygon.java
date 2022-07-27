@@ -81,8 +81,8 @@ public class Polygon extends CyclicGeometry<Polygon> {
     }
 
     /**
-     * Returns the number of edges of this polyline. This is equal to the number
-     * of vertices minus one.
+     * Returns the number of edges of this polygon. This is equal to the number
+     * of vertices.
      *
      * @return edge count
      */
@@ -544,6 +544,46 @@ public class Polygon extends CyclicGeometry<Polygon> {
         }
 
     }
+    
+    
+    /**
+     * Normalizes the index to the range [0,n) where n is the number of vertices
+     * (or edges) of the polygon.
+     *
+     * @param index
+     * @return index mod n
+     */
+    public int index(int index) {
+        if (_vertices.isEmpty()) {
+            return index;
+        }
+        while (index < 0) {
+            index += _vertices.size();
+        }
+        return index % _vertices.size();
+    }
+
+    /**
+     * Returns the next index, in the circular range [0,n) where n is the number
+     * of vertices (or edges) of the polygon.
+     *
+     * @param index
+     * @return (index+1) mod n
+     */
+    public int nextIndex(int index) {
+        return index(index + 1);
+    }
+
+    /**
+     * Returns the previous index, in the circular range [0,n) where n is the
+     * number of vertices (or edges) of the polygon.
+     *
+     * @param index
+     * @return (index-1) mod n
+     */
+    public int previousIndex(int index) {
+        return index(index - 1);
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
@@ -699,18 +739,6 @@ public class Polygon extends CyclicGeometry<Polygon> {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[" + _vertices.size() + "]";
-    }
-    //</editor-fold>
-
-    //<editor-fold defaultstate="collapsed" desc="PRIVATE">
-    private int index(int index) {
-        if (_vertices.size() == 0) {
-            return index;
-        }
-        while (index < 0) {
-            index += _vertices.size();
-        }
-        return index % _vertices.size();
     }
     //</editor-fold>
 }

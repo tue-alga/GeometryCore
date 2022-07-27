@@ -39,11 +39,33 @@ public class ExtendedColors {
     public static final Color darkPurple = fromUnitRGB(0.4157, 0.2392, 0.6039);
     //</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="COLOR SCHEMES"> 
+    // Paired Color Brewer scheme, and subsets thereof
+    public static final Color[] paired = {
+        lightBlue, darkBlue,
+        lightGreen, darkGreen,
+        lightRed, darkRed,
+        lightOrange, darkOrange,
+        lightPurple, darkPurple};
+    public static final Color[] dark = {
+        darkBlue,
+        darkGreen,
+        darkRed,
+        darkOrange,
+        darkPurple};
+    public static final Color[] light = {
+        lightBlue,
+        lightGreen,
+        lightRed,
+        lightOrange,
+        lightPurple};
+    //</editor-fold>
+
     //<editor-fold defaultstate="collapsed" desc="COLOR CONSTRUCTORS">
     public static Color fromUnitRGB(double r, double g, double b) {
         return new Color((float) r, (float) g, (float) b);
     }
-    
+
     public static Color fromUnitGray(double gray) {
         return fromUnitRGB(gray, gray, gray);
     }

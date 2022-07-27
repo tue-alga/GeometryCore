@@ -97,6 +97,17 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
     public static Line spannedBy(LineSegment ls) {
         return Line.byThroughpoints(ls.getStart(), ls.getEnd());
     }
+    
+    /**
+     * Computes the line spanned by the given halfline, i.e., through its
+     * origin with the same direction.
+     *
+     * @param hl halfline through which the line should pass
+     * @return constructed line
+     */
+    public static Line spannedBy(HalfLine hl) {
+        return new Line(hl.getOrigin(), hl.getDirection());
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="GET & SET">
@@ -207,7 +218,10 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
 
     @Override
     public boolean onBoundary(Vector point, double prec) {
-        Vector dir = Vector.subtract(point, _through);
+        if (point.isApproximately(_through, prec)) {
+            return true;
+        }
+        Vector dir = Vector.subtract(point, _through);        
         // TODO: should we normalize? distance from through point should have no effect on precision
         dir.normalize();
         Vector perp = perpendicular();
@@ -221,19 +235,19 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
     }
 
     @Override
-    public void intersect(BaseGeometry otherGeom, double prec, List<BaseGeometry> intersections) {
-        switch (otherGeom.getGeometryType()) {
+    public void intersect(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
+        switch (other.getGeometryType()) {
             case LINE:
-                lineIntersection((Line) otherGeom, prec, intersections);
+                lineIntersection((Line) other, prec, intersections);
                 break;
             case HALFLINE:
-                halflineIntersection((HalfLine) otherGeom, prec, intersections);
+                halflineIntersection((HalfLine) other, prec, intersections);
                 break;
             case LINESEGMENT:
-                segmentIntersection((LineSegment) otherGeom, prec, intersections);
+                segmentIntersection((LineSegment) other, prec, intersections);
                 break;
             default:
-                otherGeom.intersect(this, prec, intersections);
+                other.intersect(this, prec, intersections);
                 break;
         }
     }

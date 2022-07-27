@@ -44,6 +44,15 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
     public int size() {
         return _size;
     }
+    
+    /**
+     * Returns whether the list is empty.
+     * 
+     * @return true iff the size of the list is zero
+     */
+    public boolean isEmpty() {
+        return _size == 0;
+    }
 
     /**
      * Returns the first element in the list. Returns null if the list is empty.

@@ -35,8 +35,8 @@ public class Interval {
      * Creates an empty interval.
      */
     public Interval() {
-        _min = 1;
-        _max = 0;
+        _min = Double.POSITIVE_INFINITY;
+        _max = Double.NEGATIVE_INFINITY;
     }
 
     /**
@@ -68,8 +68,8 @@ public class Interval {
      */
     public Interval(double... values) {
         if (values.length == 0) {
-            _min = 1;
-            _max = 0;
+            _min = Double.POSITIVE_INFINITY;
+            _max = Double.NEGATIVE_INFINITY;
         } else {
             _min = values[0];
             _max = values[0];
@@ -305,6 +305,14 @@ public class Interval {
             _min += shift;
             _max += shift;
         }
+    }
+
+    /**
+     * Resets the interval to an empty interval
+     */
+    public void setEmpty() {
+        _min = Double.POSITIVE_INFINITY;
+        _max = Double.NEGATIVE_INFINITY;
     }
     //</editor-fold>
 }

@@ -141,16 +141,6 @@ public class BezierCurve extends ParameterizedCurve<BezierCurve> {
     }
 
     @Override
-    public double getMinimumParameter() {
-        return 0;
-    }
-
-    @Override
-    public double getMaximumParameter() {
-        return 1;
-    }
-
-    @Override
     public Vector getPointAt(double t) {
         Vector point = Vector.origin();
 
