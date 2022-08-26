@@ -6,6 +6,8 @@
  */
 package nl.tue.geometrycore.graphs.dcel;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +34,9 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
     final List<TFace> _faces; // NB: face 0 will always be the general outerface
     final List<TDart> _darts; // NB: saves only one of two darts representing an edge
     final List<TVertex> _vertices;
-    private final Class _vertexClass;
-    private final Class _edgeClass;
-    private final Class _faceClass;
+    private final Constructor<TVertex> _vertexConstructor;
+    private final Constructor<TDart> _dartConstructor;
+    private final Constructor<TFace> _faceConstructor;
 
     // -------------------------------------------------------------------------
     // CONSTRUCTORS
@@ -42,6 +44,9 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
     /**
      * Constructs a DCEL graph. With this constructor, reflection is used to
      * create new vertices, darts and faces.
+     *
+     * NB: the vertex, dart and face class cannot be non-static subclasses.
+     * Otherwise, a NoSuchMethodException will occur.
      */
     public DCELGraph() {
         this(true);
@@ -52,23 +57,45 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
      * new vertices, darts and faces. If set to false, override createVertex,
      * createDart and createFace methods.
      *
+     * NB: when using reflection, the vertex, dart and face class cannot be
+     * non-static subclasses. Otherwise, a NoSuchMethodException will occur.
+     *
      * @param reflection
      */
     public DCELGraph(boolean reflection) {
         _faces = new ArrayList<TFace>();
         _darts = new ArrayList<TDart>();
         _vertices = new ArrayList<TVertex>();
+
         if (reflection) {
-            _vertexClass = (Class) ((ParameterizedType) this.getClass().
-                    getGenericSuperclass()).getActualTypeArguments()[1];
-            _edgeClass = (Class) ((ParameterizedType) this.getClass().
-                    getGenericSuperclass()).getActualTypeArguments()[2];
-            _faceClass = (Class) ((ParameterizedType) this.getClass().
-                    getGenericSuperclass()).getActualTypeArguments()[3];
+            Constructor<TVertex> vertex;
+            Constructor<TDart> dart;
+            Constructor<TFace> face;
+            try {
+                Class vertexClass = (Class) ((ParameterizedType) this.getClass().
+                        getGenericSuperclass()).getActualTypeArguments()[1];
+                vertex = vertexClass.getDeclaredConstructor();
+
+                Class dartClass = (Class) ((ParameterizedType) this.getClass().
+                        getGenericSuperclass()).getActualTypeArguments()[2];
+                dart = dartClass.getConstructor();
+
+                Class faceClass = (Class) ((ParameterizedType) this.getClass().
+                        getGenericSuperclass()).getActualTypeArguments()[3];
+                face = faceClass.getConstructor();
+            } catch (NoSuchMethodException | SecurityException ex) {
+                Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+                vertex = null;
+                dart = null;
+                face = null;
+            }
+            _vertexConstructor = vertex;
+            _dartConstructor = dart;
+            _faceConstructor = face;
         } else {
-            _vertexClass = null;
-            _edgeClass = null;
-            _faceClass = null;
+            _vertexConstructor = null;
+            _dartConstructor = null;
+            _faceConstructor = null;
         }
 
         initializeOuterFace();
@@ -100,9 +127,8 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
     // -------------------------------------------------------------------------
     public TVertex createVertex() {
         try {
-            TVertex instance = (TVertex) _vertexClass.newInstance();
-            return instance;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            return _vertexConstructor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
@@ -110,9 +136,8 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
 
     public TDart createDart() {
         try {
-            TDart instance = (TDart) _edgeClass.newInstance();
-            return instance;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            return _dartConstructor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
@@ -120,9 +145,8 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
 
     public TFace createFace() {
         try {
-            TFace instance = (TFace) _faceClass.newInstance();
-            return instance;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            return _faceConstructor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }

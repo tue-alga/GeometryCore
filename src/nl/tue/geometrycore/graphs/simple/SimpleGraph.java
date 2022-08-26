@@ -6,6 +6,8 @@
  */
 package nl.tue.geometrycore.graphs.simple;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,8 +69,8 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     // -------------------------------------------------------------------------
     private final List<TVertex> _vertices;
     private final List<TEdge> _edges;
-    private final Class _vertexClass;
-    private final Class _edgeClass;
+    private final Constructor<TVertex> _vertexConstructor;
+    private final Constructor<TEdge> _edgeConstructor;
 
     // -------------------------------------------------------------------------
     // CONSTRUCTORS
@@ -76,6 +78,9 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     /**
      * Constructs a simple graph. With this constructor, reflection is used to
      * create new vertices and edges.
+     * 
+     * NB: the vertex and edge class cannot be non-static
+     * subclasses. Otherwise, a NoSuchMethodException will occur.
      */
     public SimpleGraph() {
         this(true);
@@ -86,19 +91,35 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
      * new vertices and edges. If set to false, override createVertex and
      * createEdge methods.
      *
+     * NB: when using reflection, the vertex and edge class cannot be non-static
+     * subclasses. Otherwise, a NoSuchMethodException will occur.
+     *
      * @param reflection
      */
     public SimpleGraph(boolean reflection) {
         _vertices = new ArrayList();
         _edges = new ArrayList();
         if (reflection) {
-            _vertexClass = (Class) ((ParameterizedType) this.getClass().
-                    getGenericSuperclass()).getActualTypeArguments()[1];
-            _edgeClass = (Class) ((ParameterizedType) this.getClass().
-                    getGenericSuperclass()).getActualTypeArguments()[2];
+            Constructor<TVertex> vertex;
+            Constructor<TEdge> edge;
+            try {
+                Class vertexClass = (Class) ((ParameterizedType) this.getClass().
+                        getGenericSuperclass()).getActualTypeArguments()[1];
+                vertex = vertexClass.getDeclaredConstructor();
+
+                Class edgeClass = (Class) ((ParameterizedType) this.getClass().
+                        getGenericSuperclass()).getActualTypeArguments()[2];
+                edge = edgeClass.getConstructor();
+            } catch (NoSuchMethodException | SecurityException ex) {
+                Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+                vertex = null;
+                edge = null;
+            }
+            _vertexConstructor = vertex;
+            _edgeConstructor = edge;
         } else {
-            _vertexClass = null;
-            _edgeClass = null;
+            _vertexConstructor = null;
+            _edgeConstructor = null;
         }
     }
 
@@ -118,9 +139,8 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     // -------------------------------------------------------------------------
     public TVertex createVertex() {
         try {
-            TVertex instance = (TVertex) _vertexClass.newInstance();
-            return instance;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            return _vertexConstructor.newInstance();
+        } catch (IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
@@ -128,9 +148,8 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
 
     public TEdge createEdge() {
         try {
-            TEdge instance = (TEdge) _edgeClass.newInstance();
-            return instance;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            return _edgeConstructor.newInstance();
+        } catch (IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
