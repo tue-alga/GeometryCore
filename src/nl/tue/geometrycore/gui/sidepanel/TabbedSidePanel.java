@@ -44,6 +44,14 @@ public class TabbedSidePanel extends JPanel {
     public TabbedSidePanel() {
         this(250, 5, 20, 3);
     }
+    
+     /**
+     * Constructs a tabbed side panel with default settings, except for panel width. The defaults are
+     * margin 5, element height 20 and spacing 3.
+     */
+    public TabbedSidePanel(int width) {
+        this(width, 5, 20, 3);
+    }
 
     /**
      * Constructs a tabbed side panel with the provided settings.
