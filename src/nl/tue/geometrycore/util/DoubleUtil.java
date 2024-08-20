@@ -351,4 +351,50 @@ public class DoubleUtil {
         return xs;
     }
     //</editor-fold>    
+
+    //<editor-fold defaultstate="collapsed" desc="BASIC COMPUTATIONS">
+    /**
+     * Linearly interpolations between the two given values.
+     *
+     * @param a the first value
+     * @param b the second value
+     * @param lambda how far to interpolate from a to b
+     * @return (1-lambda) * a + lambda * b
+     */
+    public static double interpolate(double a, double b, double lambda) {
+        return (1 - lambda) * a + lambda * b;
+    }
+
+    /**
+     * Convenience function to compute the maximum over multiple values. The
+     * value will be negative infinity if vs is empty; if a value is NaN, then
+     * the result will be NaN.
+     *
+     * @param vs An array of numbers
+     * @return The maximum value in vs
+     */
+    public static double max(double... vs) {
+        double m = Double.NEGATIVE_INFINITY;
+        for (double v : vs) {
+            m = Math.max(m, v);
+        }
+        return m;
+    }
+    
+     /**
+     * Convenience function to compute the minimum over multiple values. The
+     * value will be positive infinity if vs is empty; if a value is NaN, then
+     * the result will be NaN.
+     *
+     * @param vs An array of numbers
+     * @return The minimum value in vs
+     */
+    public static double min(double... vs) {
+        double m = Double.POSITIVE_INFINITY;
+        for (double v : vs) {
+            m = Math.min(m, v);
+        }
+        return m;
+    }
+    //</editor-fold>
 }
