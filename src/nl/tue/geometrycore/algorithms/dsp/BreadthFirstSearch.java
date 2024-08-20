@@ -6,8 +6,11 @@
  */
 package nl.tue.geometrycore.algorithms.dsp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.graphs.simple.SimpleEdge;
@@ -23,6 +26,7 @@ public class BreadthFirstSearch<TGraph extends SimpleGraph<TGeom, TVertex, TEdge
     private final TGraph _graph;
     private final int[] _distances;
     private final TVertex[] _prev;
+    private TVertex _source;
 
     public BreadthFirstSearch(TGraph graph) {
         _graph = graph;
@@ -30,25 +34,61 @@ public class BreadthFirstSearch<TGraph extends SimpleGraph<TGeom, TVertex, TEdge
         _prev = (TVertex[]) new SimpleVertex[_graph.getVertices().size()];
     }
 
-    public int run(TVertex source) {
-       return run(source, null);
+    public TVertex getPrevious(TVertex v) {
+        return _prev[v.getGraphIndex()];
     }
-    
+
+    /**
+     * Returns the path from the source to the specified vertex. The result is
+     * null if no path exists or if the source is provided. The source and
+     * target vertex are included in the path.
+     *
+     * @param target
+     * @return
+     */
+    public List<TVertex> getPathTo(TVertex target) {
+        if (target == _source) {
+            List<TVertex> result = new ArrayList();
+            result.add(target);
+            return result;
+        }
+
+        TVertex v = getPrevious(target);
+        if (v == null) {
+            return null;
+        }
+
+        List<TVertex> result = new ArrayList();
+        result.add(target);
+        result.add(v);
+        while (v != _source) {
+            v = getPrevious(v);
+            result.add(v);
+        }
+        Collections.reverse(result);
+        return result;
+    }
+
+    public int run(TVertex source) {
+        return run(source, null);
+    }
+
     public int run(TVertex source, TEdge ignore) {
+        _source = source;
         Arrays.fill(_distances, -1);
         _distances[source.getGraphIndex()] = 0;
         Arrays.fill(_prev, null);
-        
+
         Queue<TVertex> Q = new LinkedList();
         int found = 1;
         Q.add(source);
         while (!Q.isEmpty() && found < _graph.getVertices().size()) {
             TVertex v = Q.remove();
-            int d = _distances[v.getGraphIndex()];            
+            int d = _distances[v.getGraphIndex()];
             for (TVertex nbr : v.getNeighbors()) {
                 if (_distances[nbr.getGraphIndex()] < 0 && (ignore == null || !ignore.connects(nbr, v))) {
                     found++;
-                    _distances[nbr.getGraphIndex()] = d+1;
+                    _distances[nbr.getGraphIndex()] = d + 1;
                     _prev[nbr.getGraphIndex()] = v;
                     Q.add(nbr);
                 }
@@ -56,24 +96,25 @@ public class BreadthFirstSearch<TGraph extends SimpleGraph<TGeom, TVertex, TEdge
         }
         return found;
     }
-    
+
     public boolean runTo(TVertex source, TVertex target) {
-        return runTo(source,target,null);
+        return runTo(source, target, null);
     }
-    
+
     public boolean runTo(TVertex source, TVertex target, TEdge ignore) {
+        _source = source;
         Arrays.fill(_distances, -1);
         _distances[source.getGraphIndex()] = 0;
         Arrays.fill(_prev, null);
-        
+
         Queue<TVertex> Q = new LinkedList();
         Q.add(source);
         while (!Q.isEmpty()) {
             TVertex v = Q.remove();
-            int d = _distances[v.getGraphIndex()];            
+            int d = _distances[v.getGraphIndex()];
             for (TVertex nbr : v.getNeighbors()) {
                 if (_distances[nbr.getGraphIndex()] < 0 && (ignore == null || !ignore.connects(nbr, v))) {
-                    _distances[nbr.getGraphIndex()] = d+1;
+                    _distances[nbr.getGraphIndex()] = d + 1;
                     _prev[nbr.getGraphIndex()] = v;
                     if (nbr == target) {
                         return true;
