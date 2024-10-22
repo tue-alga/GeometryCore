@@ -9,7 +9,7 @@ package nl.tue.geometrycore.util;
 import nl.tue.geometrycore.geometry.Vector;
 
 /**
- * A simple complex number class with double impression. Computation with
+ * A simple complex number class with double precision. Computation with
  * complex numbers is supported through static functions, in which arguments can
  * be either double or Complex numbers. This allows for more flexibility
  * changing parts of the computations from double to complex and vice versa.

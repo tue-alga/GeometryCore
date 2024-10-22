@@ -144,10 +144,14 @@ public class AWTGeometryConversion {
 
     private static Shape toShape(Ellipse ellipse) {
 
-        Vector axis = ellipse.getAxis();
+        if (ellipse.isEmpty()) {
+            return null;
+        }
+
+        Vector axis = ellipse.getMajorAxis();
         double angle = Vector.right().computeCounterClockwiseAngleTo(axis);
-        double a = ellipse.getWidth() / 2.0;
-        double b = ellipse.getHeight() / 2.0;
+        double a = ellipse.getMajorAxisLength();
+        double b = ellipse.getMinorAxisLength();
         Vector center = ellipse.getCenter();
 
         Shape E = new Ellipse2D.Double(-a, -b, 2 * a, 2 * b);
@@ -223,10 +227,6 @@ public class AWTGeometryConversion {
             return null;
         }
 
-        Vector lefttop = rectangle.leftTop();
-
-        double x = lefttop.getX();
-        double y = lefttop.getY();
         double width = rectangle.width();
         double height = rectangle.height();
 
