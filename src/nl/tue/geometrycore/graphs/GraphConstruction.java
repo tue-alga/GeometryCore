@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nl.tue.geometrycore.datastructures.quadtree.QuadTree;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryCloner;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
@@ -324,6 +325,28 @@ public class GraphConstruction {
                     Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
                     Map<GeometryConvertable, List<TSimpleEdge>> edgeMap, Map<TSimpleEdge, List<GeometryConvertable>> edgeBackmap) {
 
+        convertGeometriesToGraph(graph, geometries, precision, cloner, vertexMap, vertexBackmap, edgeMap, edgeBackmap, null);
+    }
+
+    public static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
+            void convertGeometriesToGraph(TSimpleGraph graph, List<? extends GeometryConvertable> geometries,
+                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner, QuadTree<TSimpleVertex> quadtree) {
+        convertGeometriesToGraph(graph, geometries, DoubleUtil.EPS, cloner, null, null, null, null, quadtree);
+    }
+
+    public static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
+            void convertGeometriesToGraph(TSimpleGraph graph, List<? extends GeometryConvertable> geometries, double precision,
+                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner, QuadTree<TSimpleVertex> quadtree) {
+        convertGeometriesToGraph(graph, geometries, precision, cloner, null, null, null, null, quadtree);
+    }
+
+    public static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
+            void convertGeometriesToGraph(TSimpleGraph graph, List<? extends GeometryConvertable> geometries, double precision,
+                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner,
+                    Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
+                    Map<GeometryConvertable, List<TSimpleEdge>> edgeMap, Map<TSimpleEdge, List<GeometryConvertable>> edgeBackmap,
+                    QuadTree<TSimpleVertex> quadtree) {
+
         for (GeometryConvertable gc : geometries) {
             BaseGeometry g = gc.toGeometry();
 
@@ -334,7 +357,7 @@ public class GraphConstruction {
                 edgeMap.put(gc, new ArrayList());
             }
 
-            addGeometryToGraph(graph, gc, g, precision, cloner, vertexMap, vertexBackmap, edgeMap, edgeBackmap);
+            addGeometryToGraph(graph, gc, g, precision, cloner, vertexMap, vertexBackmap, edgeMap, edgeBackmap, quadtree);
 
         }
     }
@@ -343,36 +366,37 @@ public class GraphConstruction {
             void addGeometryToGraph(TSimpleGraph graph, GeometryConvertable base, BaseGeometry geometry, double precision,
                     GeometryCloner<OrientedGeometry, TSimpleGeom> cloner,
                     Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
-                    Map<GeometryConvertable, List<TSimpleEdge>> edgeMap, Map<TSimpleEdge, List<GeometryConvertable>> edgeBackmap) {
+                    Map<GeometryConvertable, List<TSimpleEdge>> edgeMap, Map<TSimpleEdge, List<GeometryConvertable>> edgeBackmap,
+                    QuadTree<TSimpleVertex> quadtree) {
 
         switch (geometry.getGeometryType()) {
             case VECTOR: {
                 Vector vector = (Vector) geometry;
-                getOrAddVertex(vector, graph, precision, base, vertexMap, vertexBackmap);
+                getOrAddVertex(vector, graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 break;
             }
             case LINESEGMENT: {
                 LineSegment segment = (LineSegment) geometry;
-                TSimpleVertex start = getOrAddVertex(segment.getStart(), graph, precision, base, vertexMap, vertexBackmap);
-                TSimpleVertex end = getOrAddVertex(segment.getEnd(), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex start = getOrAddVertex(segment.getStart(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
+                TSimpleVertex end = getOrAddVertex(segment.getEnd(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 getOrAddEdge(start, end, cloner.clone(segment), graph, base, edgeMap, edgeBackmap);
                 break;
             }
             case CIRCULARARC: {
                 CircularArc arc = (CircularArc) geometry;
-                TSimpleVertex start = getOrAddVertex(arc.getStart(), graph, precision, base, vertexMap, vertexBackmap);
-                TSimpleVertex end = getOrAddVertex(arc.getEnd(), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex start = getOrAddVertex(arc.getStart(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
+                TSimpleVertex end = getOrAddVertex(arc.getEnd(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 getOrAddEdge(start, end, cloner.clone(arc), graph, base, edgeMap, edgeBackmap);
                 break;
             }
             case POLYLINE: {
                 PolyLine polyline = (PolyLine) geometry;
-                TSimpleVertex start = getOrAddVertex(polyline.vertex(0), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex start = getOrAddVertex(polyline.vertex(0), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 for (LineSegment segment : polyline.edges()) {
                     if (segment.squaredLength() < precision * precision) {
                         continue;
                     }
-                    TSimpleVertex end = getOrAddVertex(segment.getEnd(), graph, precision, base, vertexMap, vertexBackmap);
+                    TSimpleVertex end = getOrAddVertex(segment.getEnd(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                     getOrAddEdge(start, end, cloner.clone(segment), graph, base, edgeMap, edgeBackmap);
                     start = end;
                 }
@@ -380,12 +404,12 @@ public class GraphConstruction {
             }
             case POLYGON: {
                 Polygon polygon = (Polygon) geometry;
-                TSimpleVertex start = getOrAddVertex(polygon.vertex(0), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex start = getOrAddVertex(polygon.vertex(0), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 for (LineSegment segment : polygon.edges()) {
                     if (segment.squaredLength() < precision * precision) {
                         continue;
                     }
-                    TSimpleVertex end = getOrAddVertex(segment.getEnd(), graph, precision, base, vertexMap, vertexBackmap);
+                    TSimpleVertex end = getOrAddVertex(segment.getEnd(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                     getOrAddEdge(start, end, cloner.clone(segment), graph, base, edgeMap, edgeBackmap);
                     start = end;
                 }
@@ -393,10 +417,10 @@ public class GraphConstruction {
             }
             case RECTANGLE: {
                 Rectangle rect = (Rectangle) geometry;
-                TSimpleVertex leftbottom = getOrAddVertex(rect.leftBottom(), graph, precision, base, vertexMap, vertexBackmap);
-                TSimpleVertex lefttop = getOrAddVertex(rect.leftTop(), graph, precision, base, vertexMap, vertexBackmap);
-                TSimpleVertex rightbottom = getOrAddVertex(rect.rightBottom(), graph, precision, base, vertexMap, vertexBackmap);
-                TSimpleVertex righttop = getOrAddVertex(rect.rightTop(), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex leftbottom = getOrAddVertex(rect.leftBottom(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
+                TSimpleVertex lefttop = getOrAddVertex(rect.leftTop(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
+                TSimpleVertex rightbottom = getOrAddVertex(rect.rightBottom(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
+                TSimpleVertex righttop = getOrAddVertex(rect.rightTop(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 getOrAddEdge(lefttop, leftbottom, cloner.clone(rect.leftSide()), graph, base, edgeMap, edgeBackmap);
                 getOrAddEdge(leftbottom, rightbottom, cloner.clone(rect.rightSide()), graph, base, edgeMap, edgeBackmap);
                 getOrAddEdge(rightbottom, righttop, cloner.clone(rect.bottomSide()), graph, base, edgeMap, edgeBackmap);
@@ -405,9 +429,9 @@ public class GraphConstruction {
             }
             case GEOMETRYSTRING: {
                 GeometryString<? extends OrientedGeometry> string = (GeometryString) geometry;
-                TSimpleVertex start = getOrAddVertex(string.vertex(0), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex start = getOrAddVertex(string.vertex(0), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 for (OrientedGeometry edge : string.edges()) {
-                    TSimpleVertex end = getOrAddVertex(edge.getEnd(), graph, precision, base, vertexMap, vertexBackmap);
+                    TSimpleVertex end = getOrAddVertex(edge.getEnd(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                     getOrAddEdge(start, end, cloner.clone(edge), graph, base, edgeMap, edgeBackmap);
                     start = end;
                 }
@@ -415,9 +439,9 @@ public class GraphConstruction {
             }
             case GEOMETRYCYCLE: {
                 GeometryCycle<? extends OrientedGeometry> cycle = (GeometryCycle) geometry;
-                TSimpleVertex start = getOrAddVertex(cycle.vertex(0), graph, precision, base, vertexMap, vertexBackmap);
+                TSimpleVertex start = getOrAddVertex(cycle.vertex(0), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                 for (OrientedGeometry edge : cycle.edges()) {
-                    TSimpleVertex end = getOrAddVertex(edge.getEnd(), graph, precision, base, vertexMap, vertexBackmap);
+                    TSimpleVertex end = getOrAddVertex(edge.getEnd(), graph, precision, base, vertexMap, vertexBackmap, quadtree);
                     getOrAddEdge(start, end, cloner.clone(edge), graph, base, edgeMap, edgeBackmap);
                     start = end;
                 }
@@ -426,7 +450,7 @@ public class GraphConstruction {
             case GEOMETRYGROUP: {
                 GeometryGroup<? extends BaseGeometry> group = (GeometryGroup) geometry;
                 for (BaseGeometry part : group.getParts()) {
-                    addGeometryToGraph(graph, base, part, precision, cloner, vertexMap, vertexBackmap, edgeMap, edgeBackmap);
+                    addGeometryToGraph(graph, base, part, precision, cloner, vertexMap, vertexBackmap, edgeMap, edgeBackmap, quadtree);
                 }
                 break;
             }
@@ -446,15 +470,20 @@ public class GraphConstruction {
 
     private static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
             TSimpleVertex getOrAddVertex(Vector position, TSimpleGraph graph, double precision,
-                    GeometryConvertable base, Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap) {
+                    GeometryConvertable base, Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
+                    QuadTree<TSimpleVertex> quadtree) {
 
         TSimpleVertex result = null;
 
-        for (TSimpleVertex vertex : graph.getVertices()) {
-            if (vertex.isApproximately(position, precision)) {
-                result = vertex;
-                break;
+        if (quadtree == null) {
+            for (TSimpleVertex vertex : graph.getVertices()) {
+                if (vertex.isApproximately(position, precision)) {
+                    result = vertex;
+                    break;
+                }
             }
+        } else {
+            result = quadtree.find(position, precision);
         }
 
         if (result == null) {
@@ -462,6 +491,10 @@ public class GraphConstruction {
 
             if (vertexBackmap != null) {
                 vertexBackmap.put(result, new ArrayList());
+            }
+
+            if (quadtree != null) {
+                quadtree.insert(result);
             }
         }
 
