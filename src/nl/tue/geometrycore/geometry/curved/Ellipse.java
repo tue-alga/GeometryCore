@@ -13,7 +13,6 @@ import nl.tue.geometrycore.geometry.GeometryType;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
 import nl.tue.geometrycore.util.DoubleUtil;
-import nl.tue.geometrycore.util.Pair;
 
 /**
  * A simple ellipse. Note that, although it inherits from CyclicGeometry, it has

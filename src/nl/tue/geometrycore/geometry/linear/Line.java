@@ -97,16 +97,28 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
     public static Line spannedBy(LineSegment ls) {
         return Line.byThroughpoints(ls.getStart(), ls.getEnd());
     }
-    
+
     /**
-     * Computes the line spanned by the given halfline, i.e., through its
-     * origin with the same direction.
+     * Computes the line spanned by the given halfline, i.e., through its origin
+     * with the same direction.
      *
      * @param hl halfline through which the line should pass
      * @return constructed line
      */
     public static Line spannedBy(HalfLine hl) {
         return new Line(hl.getOrigin(), hl.getDirection());
+    }
+
+    /**
+     * Computes the line that passes through the given point with the given
+     * slope. Note that the provided point is used to construct the line.
+     *
+     * @param through point through which the line should pass
+     * @param slope the slope the desired line
+     * @return constructed line
+     */
+    public static Line fromThoughpointAndSlope(Vector through, double slope) {
+        return new Line(through, new Vector(1, slope));
     }
     //</editor-fold>
 
@@ -221,7 +233,7 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
         if (point.isApproximately(_through, prec)) {
             return true;
         }
-        Vector dir = Vector.subtract(point, _through);        
+        Vector dir = Vector.subtract(point, _through);
         // TODO: should we normalize? distance from through point should have no effect on precision
         dir.normalize();
         Vector perp = perpendicular();
