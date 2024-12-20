@@ -51,7 +51,7 @@ import nl.tue.geometrycore.io.raster.RasterWriter;
  * {@link nl.tue.geometrycore.geometryrendering.GeometryRenderer} interface.
  *
  * It provides basic interactions for panning (right-mouse dragging), zooming
- * (scroll wheel, or scroll-wheel dragging) and zoom-to-fit (spacebar). These
+ * (scroll wheel, or scroll-wheel dragging, or right-mouse dragging with alt) and zoom-to-fit (spacebar). These
  * interactions are enabled by default, but can be disabled.
  *
  * It also provides the possibility to add basic interactions with geometric
@@ -662,8 +662,8 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
 
         boolean handled = false;
 
-        if (_zoomingEnabled && !ctrl && !shift && !alt) {
-            if (_mouseButton == MouseEvent.BUTTON2) {
+        if (_zoomingEnabled && !ctrl && !shift) {
+            if (_mouseButton == MouseEvent.BUTTON2 || (_mouseButton == MouseEvent.BUTTON3 && alt)) {
                 // zoombox
                 _zoomboxStart = loc;
                 _zoomboxEnd = loc;
@@ -778,7 +778,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         }
 
         if (_panningEnabled && !ctrl && !shift && !alt) {
-            if (_mouseButton == MouseEvent.BUTTON3) {
+            if (_mouseButton == MouseEvent.BUTTON3 && !handled) { // if handled, then we're doing a zoombox...
                 // pan
                 double dx = viewLoc.getX() - _mousePrevView.getX();
                 double dy = viewLoc.getY() - _mousePrevView.getY();
