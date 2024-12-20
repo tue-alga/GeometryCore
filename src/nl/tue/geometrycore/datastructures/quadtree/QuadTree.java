@@ -7,6 +7,7 @@
 package nl.tue.geometrycore.datastructures.quadtree;
 
 import java.util.ArrayList;
+import java.util.List;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
 
@@ -149,10 +150,54 @@ public class QuadTree<T extends Vector> {
     }
 
     /**
+     * Finds all elements that are contained within the specified rectangle.
+     * Time is proportional to the number of leaves that intersect the
+     * rectangle, and the elements contained therein.
+     *
+     * @param R rectangle in which to search for elements
+     * @param prec desired precision; use negative values for excluding the
+     * rectangle boundary
+     * @return a list of the contained elements
+     */
+    public List<T> find(Rectangle R, double prec) {
+        List<T> result = new ArrayList();
+        findRecursive(result, _root, R, prec);
+        return result;
+    }
+
+    private void findRecursive(List<T> result, QuadNode n, Rectangle R, double prec) {
+        if (n == null || !n._rect.overlaps(R, prec)) {
+            // no node
+            // or disjoint
+            return;
+        }
+
+        if (n._elts == null) {
+            // interior node, that overlaps R
+            findRecursive(result, n._LB, R, prec);
+            findRecursive(result, n._RB, R, prec);
+            findRecursive(result, n._LT, R, prec);
+            findRecursive(result, n._RT, R, prec);
+        } else {
+            // leaf node with elements            
+            if (R.containsCompletely(n._rect, prec)) {
+                result.addAll(n._elts);
+            } else {
+                for (T elt : n._elts) {
+                    if (R.contains(elt, prec)) {
+                        result.add(elt);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Finds an element that has approximately the same position as specified.
-     * Take O(maxdepth) time, but may traverse up to found paths, if the given
-     * position is close to a corner or boundary of a quad. If multiple elements
-     * would match the given position, an arbitrary one is returned.
+     * Take O(maxdepth) time, plus the number of elements in the leaf node(s),
+     * but may traverse up to four paths, if the given position is close to a
+     * corner or boundary of a quad. If multiple elements would match the given
+     * position, an arbitrary one is returned.
      *
      * @param pos position of the element to search for
      * @param prec desired precision
