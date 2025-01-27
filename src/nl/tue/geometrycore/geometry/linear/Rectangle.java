@@ -337,11 +337,11 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
         }
     }
 
-    public boolean containsCompletely(BaseGeometry geom) {
+    public boolean containsCompletely(GeometryConvertable geom) {
         return containsCompletely(geom, 0);
     }
 
-    public boolean containsCompletely(BaseGeometry geom, double prec) {
+    public boolean containsCompletely(GeometryConvertable geom, double prec) {
         Rectangle R = Rectangle.byBoundingBox(geom);
         return contains(R.leftBottom(), prec) && contains(R.rightTop());
     }
@@ -360,7 +360,7 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
         }
 
         return true;
-    }
+    }    
 
     @Override
     public boolean onBoundary(Vector point, double prec) {
