@@ -10,9 +10,9 @@ package nl.tue.geometrycore.datastructures.rbtree;
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public abstract class RedBlackTreeItem<TItem extends RedBlackTreeItem<TItem>> {
+public class RedBlackTreeItem<TItem extends RedBlackTreeItem<TItem>> {
 
-    // three structure
+    // tree structure
     RedBlackTree<TItem> _tree;
     TItem _parent, _left, _right;
     // this node
