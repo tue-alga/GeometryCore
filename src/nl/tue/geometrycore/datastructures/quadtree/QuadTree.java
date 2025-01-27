@@ -8,22 +8,33 @@ package nl.tue.geometrycore.datastructures.quadtree;
 
 import java.util.ArrayList;
 import java.util.List;
+import nl.tue.geometrycore.geometry.BaseGeometry;
+import nl.tue.geometrycore.geometry.CyclicGeometry;
+import nl.tue.geometrycore.geometry.GeometryConvertable;
+import nl.tue.geometrycore.geometry.GeometryType;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
+import nl.tue.geometrycore.geometry.mix.GeometryGroup;
 
 /**
- * Provides a simple quad-tree implementation for finding points. It is based on
- * a container rectangle, that is recursively subdivided into four equal parts,
- * up to a maximum depth. These nodes are created on demand, as elements are
- * inserted. Behavior for points outside of the initially specified rectangle is
- * undefined.
+ * Provides a simple quad-tree implementation for finding geometric objects. It
+ * is based on a container rectangle, that is recursively subdivided into four
+ * equal parts, up to a maximum depth. These nodes are created on demand as
+ * elements are inserted, and removed when possible as elements are removed.
+ * Elements are stored smallest node that contains it still. Boxes that are
+ * adjacent to the exterior of the specified rectangle are treated as infinite
+ * towards that side.
+ *
+ * Note that the implementation is efficient predominantly for working with many
+ * small objects over a large domain. Large objects are stored high up in the
+ * tree and are thus not very efficient.
  *
  * @param <T> the class of objects stored in the priority queue
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class QuadTree<T extends Vector> {
+public class QuadTree<T extends GeometryConvertable> {
 
-    private final QuadNode _root;
+    private final QuadNode<T> _root;
     private final int _maxDepth;
 
     /**
@@ -33,9 +44,95 @@ public class QuadTree<T extends Vector> {
      * @param maxDepth maximum depth of the tree
      */
     public QuadTree(Rectangle box, int maxDepth) {
-        _root = new QuadNode();
-        _root._rect = box.clone();
+        _root = new QuadNode(null, box.clone(), true, true, true, true);
         _maxDepth = maxDepth;
+    }
+
+    public QuadNode<T> find(T elt) {
+        return find(elt, false);
+    }
+
+    private QuadNode<T> find(T elt, boolean extend) {
+        Rectangle b = Rectangle.byBoundingBox(elt);
+        QuadNode<T> n = _root;
+        int d = 0;
+        while (d <= _maxDepth) {
+
+            Vector c = n._rect.center();
+            if (b.getRight() <= c.getX()) {
+                // left
+                if (b.getTop() <= c.getY()) {
+                    // bottom
+                    if (n._LB == null) {
+                        if (extend) {
+                            n._LB = new QuadNode(n, Rectangle.byCorners(n._rect.leftBottom(), c), n._infLeft, false, n._infBottom, false);
+                        } else {
+                            return null;
+                        }
+                    }
+                    n = n._LB;
+                    d++;
+                } else if (b.getBottom() >= c.getY()) {
+                    // top
+                    if (n._LT == null) {
+                        if (extend) {
+                            n._LT = new QuadNode(n, Rectangle.byCorners(n._rect.leftTop(), c), n._infLeft, false, false, n._infTop);
+                        } else {
+                            return null;
+                        }
+                    }
+                    n = n._LT;
+                    d++;
+                } else {
+                    return n;
+                }
+            } else if (b.getLeft() >= c.getX()) {
+                // right
+                if (b.getTop() <= c.getY()) {
+                    //  bottom
+                    if (n._RB == null) {
+                        if (extend) {
+                            n._RB = new QuadNode(n, Rectangle.byCorners(n._rect.rightBottom(), c), false, n._infRight, n._infBottom, false);
+                        } else {
+                            return null;
+                        }
+                    }
+                    n = n._RB;
+                    d++;
+                } else if (b.getBottom() >= c.getY()) {
+                    //  top
+                    if (n._RT == null) {
+                        if (extend) {
+                            n._RT = new QuadNode(n, Rectangle.byCorners(n._rect.rightTop(), c), false, n._infRight, false, n._infTop);
+                        } else {
+                            return null;
+                        }
+                    }
+                    n = n._RT;
+                    d++;
+                } else {
+                    return n;
+                }
+            } else {
+                return n;
+            }
+        }
+
+        return n;
+    }
+
+    /**
+     * Determines whether the given element is contained in the quad-tree.
+     *
+     * @param elt the element to be sought
+     * @return true iff the element contained in the tree
+     */
+    public boolean contains(T elt) {
+        QuadNode<T> n = find(elt, false);
+        if (n == null) {
+            return false;
+        }
+        return n._elts.contains(elt);
     }
 
     /**
@@ -43,62 +140,10 @@ public class QuadTree<T extends Vector> {
      *
      * @param elt element to insert
      */
-    public void insert(T elt) {
-        QuadNode n = _root;
-        int d = 0;
-        while (n._elts == null) {
-            // have not reached a leaf 
-            Vector c = n._rect.center();
-            d++;
-            if (elt.getX() <= c.getX()) {
-                // left
-                if (elt.getY() <= c.getY()) {
-                    // bottom     
-                    if (n._LB == null) {
-                        n._LB = new QuadNode();
-                        n._LB._rect = Rectangle.byCorners(n._rect.leftBottom(), c);
-                        if (d >= _maxDepth) {
-                            n._LB._elts = new ArrayList();
-                        }
-                    }
-                    n = n._LB;
-                } else {
-                    // top                    
-                    if (n._LT == null) {
-                        n._LT = new QuadNode();
-                        n._LT._rect = Rectangle.byCorners(n._rect.leftTop(), c);
-                        if (d >= _maxDepth) {
-                            n._LT._elts = new ArrayList();
-                        }
-                    }
-                    n = n._LT;
-                }
-            } else {
-                // right
-                if (elt.getY() <= c.getY()) {
-                    // bottom     
-                    if (n._RB == null) {
-                        n._RB = new QuadNode();
-                        n._RB._rect = Rectangle.byCorners(n._rect.rightBottom(), c);
-                        if (d >= _maxDepth) {
-                            n._RB._elts = new ArrayList();
-                        }
-                    }
-                    n = n._RB;
-                } else {
-                    // top                    
-                    if (n._RT == null) {
-                        n._RT = new QuadNode();
-                        n._RT._rect = Rectangle.byCorners(n._rect.rightTop(), c);
-                        if (d >= _maxDepth) {
-                            n._RT._elts = new ArrayList();
-                        }
-                    }
-                    n = n._RT;
-                }
-            }
-        }
+    public QuadNode<T> insert(T elt) {
+        QuadNode<T> n = find(elt, true);
         n._elts.add(elt);
+        return n;
     }
 
     /**
@@ -108,139 +153,194 @@ public class QuadTree<T extends Vector> {
      * @return true iff the element was found
      */
     public boolean remove(T elt) {
-        QuadNode n = _root;
-        int d = 0;
-        while (n._elts == null) {
-            // have not reached a leaf 
-            Vector c = n._rect.center();
-            d++;
-            if (elt.getX() <= c.getX()) {
-                // left
-                if (elt.getY() <= c.getY()) {
-                    // bottom     
-                    if (n._LB == null) {
-                        return false;
-                    }
-                    n = n._LB;
-                } else {
-                    // top                    
-                    if (n._LT == null) {
-                        return false;
-                    }
-                    n = n._LT;
-                }
-            } else {
-                // right
-                if (elt.getY() <= c.getY()) {
-                    // bottom     
-                    if (n._RB == null) {
-                        return false;
-                    }
-                    n = n._RB;
-                } else {
-                    // top                    
-                    if (n._RT == null) {
-                        return false;
-                    }
-                    n = n._RT;
-                }
-            }
+        QuadNode<T> n = find(elt, false);
+        if (n == null) {
+            return false;
         }
-        return n._elts.remove(elt);
+        return remove(elt, n);
+    }
+
+    public boolean remove(T elt, QuadNode<T> n) {
+        boolean result = n._elts.remove(elt);
+
+        // trim the tree
+        while (n._parent != null && n._elts.isEmpty() && n._LB == null && n._LT == null && n._RB == null && n._RT == null) {
+            // cull it
+            QuadNode p = n._parent;
+            if (p._LB == n) {
+                p._LB = null;
+            } else if (p._LT == n) {
+                p._LT = null;
+            } else if (p._RB == n) {
+                p._RB = null;
+            } else if (p._RT == n) {
+                p._RT = null;
+            }
+            n = p;
+        }
+
+        return result;
     }
 
     /**
-     * Finds all elements that are contained within the specified rectangle.
-     * Time is proportional to the number of leaves that intersect the
-     * rectangle, and the elements contained therein.
+     * Finds all elements that are fully contained within the specified
+     * rectangle. Time is proportional to the number of leaves that intersect
+     * the rectangle, the number of elements on the path to these leaves, and
+     * their geometric complexity.
      *
      * @param R rectangle in which to search for elements
      * @param prec desired precision; use negative values for excluding the
      * rectangle boundary
      * @return a list of the contained elements
      */
-    public List<T> find(Rectangle R, double prec) {
+    public List<T> findContainment(Rectangle R, double prec) {
         List<T> result = new ArrayList();
-        findRecursive(result, _root, R, prec);
+        findContainmentRecursive(result, _root, R, prec);
         return result;
     }
 
-    private void findRecursive(List<T> result, QuadNode n, Rectangle R, double prec) {
-        if (n == null || !n._rect.overlaps(R, prec)) {
+    private void findContainmentRecursive(List<T> result, QuadNode<T> n, Rectangle R, double prec) {
+
+        if (n == null || !n._fullRect.overlaps(R, prec)) {
             // no node
             // or disjoint
             return;
         }
 
-        if (n._elts == null) {
-            // interior node, that overlaps R
-            findRecursive(result, n._LB, R, prec);
-            findRecursive(result, n._RB, R, prec);
-            findRecursive(result, n._LT, R, prec);
-            findRecursive(result, n._RT, R, prec);
+        // elements of this node
+        if (R.containsCompletely(n._fullRect, prec)) {
+            result.addAll(n._elts);
         } else {
-            // leaf node with elements            
-            if (R.containsCompletely(n._rect, prec)) {
-                result.addAll(n._elts);
-            } else {
-                for (T elt : n._elts) {
-                    if (R.contains(elt, prec)) {
-                        result.add(elt);
-                    }
+            for (T elt : n._elts) {
+                if (R.containsCompletely(elt, prec)) {
+                    result.add(elt);
                 }
             }
+        }
+
+        // elements of children
+        findContainmentRecursive(result, n._LB, R, prec);
+        findContainmentRecursive(result, n._RB, R, prec);
+        findContainmentRecursive(result, n._LT, R, prec);
+        findContainmentRecursive(result, n._RT, R, prec);
+    }
+
+    /**
+     * Finds all elements that overlap the specified rectangle. Note that for
+     * cyclic geometries (polygons and such), overlap with the interior is also
+     * considered. Time is proportional to the number of leaves that intersect
+     * the rectangle, the number of elements on the path to these leaves, and
+     * their geometric complexity.
+     *
+     * @param R rectangle with which to search for elements
+     * @param prec desired precision; use negative values for excluding the
+     * rectangle boundary
+     * @return a list of the contained elements
+     */
+    public List<T> findOverlap(Rectangle R, double prec) {
+        List<T> result = new ArrayList();
+        findOverlapRecursive(result, _root, R, prec);
+        return result;
+    }
+
+    private void findOverlapRecursive(List<T> result, QuadNode<T> n, Rectangle R, double prec) {
+
+        if (n == null || !n._fullRect.overlaps(R, prec)) {
+            // no node
+            // or disjoint
+            return;
+        }
+
+        // elements of this node
+        if (R.containsCompletely(n._fullRect, prec)) {
+            result.addAll(n._elts);
+        } else {
+            for (T elt : n._elts) {
+                if (overlaps(R, elt.toGeometry(), prec)) {
+                    result.add(elt);
+                }
+            }
+        }
+
+        // elements of children
+        findOverlapRecursive(result, n._LB, R, prec);
+        findOverlapRecursive(result, n._RB, R, prec);
+        findOverlapRecursive(result, n._LT, R, prec);
+        findOverlapRecursive(result, n._RT, R, prec);
+    }
+
+    private boolean overlaps(Rectangle R, BaseGeometry geom, double prec) {
+        if (R.containsCompletely(geom, prec)) {
+            return true;
+        } else if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
+            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
+                if (overlaps(R, bg, prec)) {
+                    return true;
+                }
+            }
+            return false;
+        } else if (geom.getGeometryType().isCyclic() && ((CyclicGeometry) geom).contains(R.center(), prec)) {
+            // element has surface area and contains a point of the query (so, may completely contain)
+            return true;
+        } else {
+            // there is a boundary intersection between query and the element
+            // NB: for cyclic geometries, full containment has been excluded, 
+            // so if there is overlap there must be a boundary intersection
+            return !R.intersect(geom, prec).isEmpty();
         }
     }
 
     /**
-     * Finds an element that has approximately the same position as specified.
-     * Take O(maxdepth) time, plus the number of elements in the leaf node(s),
-     * but may traverse up to four paths, if the given position is close to a
-     * corner or boundary of a quad. If multiple elements would match the given
-     * position, an arbitrary one is returned.
+     * Finds all elements that overlap the specified point. Note that for cyclic
+     * geometries (polygons and such), overlap with the interior is also
+     * considered. Time is proportional to the number of leaves that intersect
+     * the rectangle, the number of elements on the path to these leaves, and
+     * their geometric complexity.
      *
-     * @param pos position of the element to search for
+     * @param pt point with which to search for elements
      * @param prec desired precision
-     * @return element with approximately the given position, or null if no such
-     * element exists
+     * @return a list of the contained elements
      */
-    public T find(Vector pos, double prec) {
-        return findRecursive(_root, pos, prec);
+    public List<T> findStabbed(Vector pt, double prec) {
+        List<T> result = new ArrayList();
+        findStabbedRecursive(result, _root, pt, prec);
+        return result;
     }
 
-    private T findRecursive(QuadNode n, Vector pos, double prec) {
-        if (n == null || !n._rect.contains(pos, prec)) {
-            return null;
-        } else if (n._elts == null) {
-            T elt = findRecursive(n._LB, pos, prec);
-            if (elt != null) {
-                return elt;
+    private void findStabbedRecursive(List<T> result, QuadNode<T> n, Vector pt, double prec) {
+
+        if (n == null || !n._fullRect.contains(pt, prec)) {
+            // no node
+            // or disjoint
+            return;
+        }
+
+        // elements of this node
+        for (T elt : n._elts) {
+            if (isStabbed(pt, elt.toGeometry(), prec)) {
+                result.add(elt);
             }
-            elt = findRecursive(n._LT, pos, prec);
-            if (elt != null) {
-                return elt;
-            }
-            elt = findRecursive(n._RT, pos, prec);
-            if (elt != null) {
-                return elt;
-            }
-            elt = findRecursive(n._RB, pos, prec);
-            return elt;
-        } else {
-            for (T elt : n._elts) {
-                if (elt.isApproximately(pos, prec)) {
-                    return elt;
+        }
+
+        // elements of children
+        findStabbedRecursive(result, n._LB, pt, prec);
+        findStabbedRecursive(result, n._RB, pt, prec);
+        findStabbedRecursive(result, n._LT, pt, prec);
+        findStabbedRecursive(result, n._RT, pt, prec);
+    }
+
+    private boolean isStabbed(Vector pt, BaseGeometry geom, double prec) {
+        if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
+            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
+                if (isStabbed(pt, bg, prec)) {
+                    return true;
                 }
             }
-            return null;
+            return false;
+        } else if (geom.getGeometryType().isCyclic()) {
+            return ((CyclicGeometry) geom).contains(pt, prec);
+        } else {
+            return geom.onBoundary(pt, prec);
         }
-    }
-
-    private class QuadNode {
-
-        Rectangle _rect;
-        QuadNode _LT, _LB, _RT, _RB;
-        ArrayList<T> _elts;
-
     }
 }
