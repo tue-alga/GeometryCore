@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,9 +79,9 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     /**
      * Constructs a simple graph. With this constructor, reflection is used to
      * create new vertices and edges.
-     * 
-     * NB: the vertex and edge class cannot be non-static
-     * subclasses. Otherwise, a NoSuchMethodException will occur.
+     *
+     * NB: the vertex and edge class cannot be non-static subclasses. Otherwise,
+     * a NoSuchMethodException will occur.
      */
     public SimpleGraph() {
         this(true);
@@ -97,28 +98,53 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
      * @param reflection
      */
     public SimpleGraph(boolean reflection) {
+        this(reflection ? 1 : -1, reflection ? 2 : -1);
+    }
+
+    /**
+     * Constructs a simple graph.Uses reflection to create new vertices and
+     * edges. The given parameters indicate the indices of the type parameters
+     * for the vertex and edge type. This is mostly useful when extending the
+     * simple graph to another generic class with different type parameters.
+     * Setting a negative index will avoid the use of reflection.
+     *
+     * NB: when using reflection, the vertex and edge class cannot be non-static
+     * subclasses. Otherwise, a NoSuchMethodException will occur.
+     *
+     * @param vertexClassIndex the index of the vertex class in the generic
+     * template
+     * @param edgeClassIndex the index of the edge class in the generic template
+     */
+    public SimpleGraph(int vertexClassIndex, int edgeClassIndex) {
         _vertices = new ArrayList();
         _edges = new ArrayList();
-        if (reflection) {
+        if (vertexClassIndex >= 0) {
             Constructor<TVertex> vertex;
-            Constructor<TEdge> edge;
             try {
                 Class vertexClass = (Class) ((ParameterizedType) this.getClass().
-                        getGenericSuperclass()).getActualTypeArguments()[1];
+                        getGenericSuperclass()).getActualTypeArguments()[vertexClassIndex];
                 vertex = vertexClass.getDeclaredConstructor();
 
-                Class edgeClass = (Class) ((ParameterizedType) this.getClass().
-                        getGenericSuperclass()).getActualTypeArguments()[2];
-                edge = edgeClass.getConstructor();
             } catch (NoSuchMethodException | SecurityException ex) {
                 Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
                 vertex = null;
-                edge = null;
             }
             _vertexConstructor = vertex;
-            _edgeConstructor = edge;
         } else {
             _vertexConstructor = null;
+        }
+        if (edgeClassIndex >= 0) {
+            Constructor<TEdge> edge;
+            try {
+                Class edgeClass = (Class) ((ParameterizedType) this.getClass().
+                        getGenericSuperclass()).getActualTypeArguments()[edgeClassIndex];
+                edge = edgeClass.getConstructor();
+            } catch (NoSuchMethodException | SecurityException ex) {
+                Logger.getLogger(SimpleGraph.class.getName()).log(Level.SEVERE, null, ex);
+                edge = null;
+            }
+            _edgeConstructor = edge;
+        } else {
             _edgeConstructor = null;
         }
     }
@@ -296,6 +322,20 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
         }
 
         vertex._graphIndex = -1;
+    }
+
+    public void sortVertices(Comparator<TVertex> comp) {
+        _vertices.sort(comp);
+        for (int i = 0; i < _vertices.size(); i++) {
+            _vertices.get(i)._graphIndex = i;
+        }
+    }
+
+    public void sortEdges(Comparator<TEdge> comp) {
+        _edges.sort(comp);
+        for (int i = 0; i < _edges.size(); i++) {
+            _edges.get(i)._graphIndex = i;
+        }
     }
 
     public void clear() {
