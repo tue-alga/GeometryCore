@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import nl.tue.geometrycore.datastructures.quadtree.QuadTree;
+import nl.tue.geometrycore.datastructures.quadtree.PointQuadTree;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryCloner;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
@@ -330,13 +330,13 @@ public class GraphConstruction {
 
     public static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
             void convertGeometriesToGraph(TSimpleGraph graph, List<? extends GeometryConvertable> geometries,
-                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner, QuadTree<TSimpleVertex> quadtree) {
+                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner, PointQuadTree<TSimpleVertex> quadtree) {
         convertGeometriesToGraph(graph, geometries, DoubleUtil.EPS, cloner, null, null, null, null, quadtree);
     }
 
     public static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
             void convertGeometriesToGraph(TSimpleGraph graph, List<? extends GeometryConvertable> geometries, double precision,
-                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner, QuadTree<TSimpleVertex> quadtree) {
+                    GeometryCloner<OrientedGeometry, TSimpleGeom> cloner, PointQuadTree<TSimpleVertex> quadtree) {
         convertGeometriesToGraph(graph, geometries, precision, cloner, null, null, null, null, quadtree);
     }
 
@@ -345,7 +345,7 @@ public class GraphConstruction {
                     GeometryCloner<OrientedGeometry, TSimpleGeom> cloner,
                     Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
                     Map<GeometryConvertable, List<TSimpleEdge>> edgeMap, Map<TSimpleEdge, List<GeometryConvertable>> edgeBackmap,
-                    QuadTree<TSimpleVertex> quadtree) {
+                    PointQuadTree<TSimpleVertex> quadtree) {
 
         for (GeometryConvertable gc : geometries) {
             BaseGeometry g = gc.toGeometry();
@@ -367,7 +367,7 @@ public class GraphConstruction {
                     GeometryCloner<OrientedGeometry, TSimpleGeom> cloner,
                     Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
                     Map<GeometryConvertable, List<TSimpleEdge>> edgeMap, Map<TSimpleEdge, List<GeometryConvertable>> edgeBackmap,
-                    QuadTree<TSimpleVertex> quadtree) {
+                    PointQuadTree<TSimpleVertex> quadtree) {
 
         switch (geometry.getGeometryType()) {
             case VECTOR: {
@@ -471,7 +471,7 @@ public class GraphConstruction {
     private static <TSimpleGeom extends OrientedGeometry<TSimpleGeom>, TSimpleGraph extends SimpleGraph<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleVertex extends SimpleVertex<TSimpleGeom, TSimpleVertex, TSimpleEdge>, TSimpleEdge extends SimpleEdge<TSimpleGeom, TSimpleVertex, TSimpleEdge>>
             TSimpleVertex getOrAddVertex(Vector position, TSimpleGraph graph, double precision,
                     GeometryConvertable base, Map<GeometryConvertable, List<TSimpleVertex>> vertexMap, Map<TSimpleVertex, List<GeometryConvertable>> vertexBackmap,
-                    QuadTree<TSimpleVertex> quadtree) {
+                    PointQuadTree<TSimpleVertex> quadtree) {
 
         TSimpleVertex result = null;
 
