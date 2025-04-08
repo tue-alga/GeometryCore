@@ -1,6 +1,8 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * GeometryCore library   
+ * Copyright (C) 2024   Wouter Meulemans (w.meulemans@tue.nl)
+ * 
+ * Licensed under GNU GPL v3. See provided license documents (license.txt and gpl-3.0.txt) for more information.
  */
 package nl.tue.geometrycore.datastructures.quadtree;
 
@@ -10,8 +12,10 @@ import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
 
 /**
+ * Node class used in the quad tree implementations.
  *
- * @author wmeulema
+ * @param <T> the class of objects stored in the quad tree
+ * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
 public class QuadNode<T extends GeometryConvertable> {
 
@@ -47,15 +51,15 @@ public class QuadNode<T extends GeometryConvertable> {
             _fullRect = rect;
         }
     }
-    
+
     public Rectangle getRectangle() {
         return _rect;
     }
-    
+
     public Rectangle getFullRectangle() {
         return _fullRect;
     }
-    
+
     public List<T> getElements() {
         return _elts;
     }
