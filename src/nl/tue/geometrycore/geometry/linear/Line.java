@@ -263,6 +263,12 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
                 break;
         }
     }
+    
+    
+    @Override
+    public Vector arbitraryPoint() {
+        return _through;
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">    

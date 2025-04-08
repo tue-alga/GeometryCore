@@ -59,7 +59,7 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
      */
     public static CircularArc fromStartTangent(Vector start, Vector startTangent, Vector end) {
 
-        Vector dir = Vector.subtract(end,start);
+        Vector dir = Vector.subtract(end, start);
         boolean ccw = 0 < Vector.crossProduct(startTangent, dir);;
 
         Line bisec = Line.bisector(start, end);
@@ -297,13 +297,14 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
     public double centralAngle() {
         return centralAngle(radius());
     }
-    
+
     /**
      * Computes the sagitta of the arc. This value is always positive.
-     * @return sagitta of the arc 
+     *
+     * @return sagitta of the arc
      */
     public double sagitta() {
-        return new LineSegment(_start,_end).getPointAt(0.5).distanceTo(getPointAt(0.5));
+        return new LineSegment(_start, _end).getPointAt(0.5).distanceTo(getPointAt(0.5));
     }
 
     /**
@@ -685,6 +686,11 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
                 }
             }
         }
+    }
+
+    @Override
+    public Vector arbitraryPoint() {
+        return _start;
     }
     //</editor-fold>
 

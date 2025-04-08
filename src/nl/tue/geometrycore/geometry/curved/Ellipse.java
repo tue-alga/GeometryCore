@@ -162,10 +162,10 @@ public class Ellipse extends CyclicGeometry<Ellipse> {
     public boolean isCircle() {
         return _f1.isApproximately(_f2);
     }
-    
-    /** 
+
+    /**
      * Computes the center of the ellipse.
-     * 
+     *
      * @return The point halfway the two focal points
      */
     public Vector getCenter() {
@@ -190,7 +190,7 @@ public class Ellipse extends CyclicGeometry<Ellipse> {
             return v;
         }
     }
-    
+
     /**
      * Computes a normalized vector that represents the minor axis. Returns null
      * for empty ellipses, and a vector that is orthogonal to getMajorAxis() for
@@ -230,7 +230,7 @@ public class Ellipse extends CyclicGeometry<Ellipse> {
     public double getMinorAxisLength() {
         double hfd = _f1.distanceTo(_f2) / 2.0;
         double hd = _d / 2.0;
-        return Math.sqrt(hd*hd - hfd*hfd);
+        return Math.sqrt(hd * hd - hfd * hfd);
     }
 
     @Override
@@ -270,7 +270,12 @@ public class Ellipse extends CyclicGeometry<Ellipse> {
 
     @Override
     public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
-        throw new UnsupportedOperationException("Interior intersection not yet implemented for Ellipse");
+        throw new UnsupportedOperationException("NYI");
+    }
+
+    @Override
+    public Vector arbitraryPoint() {
+        throw new UnsupportedOperationException("NYI");
     }
     //</editor-fold>
 

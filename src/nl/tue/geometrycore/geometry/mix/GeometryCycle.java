@@ -159,7 +159,7 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
         }
         return false;
     }
-    
+
     @Override
     public Vector closestPoint(Vector point) {
         Vector result = null;
@@ -210,15 +210,20 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
     public double areaSigned() {
         throw new UnsupportedOperationException("NYI");
     }
-    
+
     @Override
     public boolean contains(Vector point, double prec) {
         throw new UnsupportedOperationException("NYI");
     }
-    
+
     @Override
     public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
-        throw new UnsupportedOperationException("Interior intersection not yet implemented for GeometryCycle");
+        throw new UnsupportedOperationException("NYI");
+    }
+
+    @Override
+    public Vector arbitraryPoint() {
+        return _edges.isEmpty() ? null : _edges.get(0).getStart();
     }
     //</editor-fold>
 
@@ -243,7 +248,7 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
             edge.scale(factorX, factorY);
         }
     }
-    
+
     @Override
     public void reverse() {
         Collections.reverse(_edges);
@@ -258,7 +263,7 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
     public GeometryType getGeometryType() {
         return GeometryType.GEOMETRYCYCLE;
     }
-    
+
     @Override
     public GeometryCycle<TEdge> clone() {
         List<TEdge> cloned = new ArrayList();

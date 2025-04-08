@@ -344,6 +344,11 @@ public class PolyLine extends OrientedGeometry<PolyLine> {
                 return _vertices.get(n-1);
         }
     }
+        
+    @Override
+    public Vector arbitraryPoint() {
+        return _vertices.isEmpty() ? null : _vertices.get(0);
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

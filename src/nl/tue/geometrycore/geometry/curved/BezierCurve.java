@@ -152,4 +152,9 @@ public class BezierCurve extends ParameterizedCurve<BezierCurve> {
 
         return point;
     }
+    
+     @Override
+    public Vector arbitraryPoint() {
+        return _controlpoints.isEmpty() ? null : _controlpoints.get(0);
+    }
 }

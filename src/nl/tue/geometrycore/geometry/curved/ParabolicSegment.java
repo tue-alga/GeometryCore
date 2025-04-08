@@ -323,7 +323,12 @@ public class ParabolicSegment extends ParameterizedCurve<ParabolicSegment> {
 
     @Override
     public Vector closestPoint(Vector point) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("NYI"); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Vector arbitraryPoint() {
+        throw new UnsupportedOperationException("NYI");
     }
     //</editor-fold>
 

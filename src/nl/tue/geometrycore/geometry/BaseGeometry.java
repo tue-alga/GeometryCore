@@ -109,6 +109,14 @@ public abstract class BaseGeometry<TActual extends BaseGeometry> implements Geom
      * @return closest point
      */
     public abstract Vector closestPoint(Vector point);
+
+    /**
+     * Computes an arbitrary point of this geometry. Note that this need not be
+     * a new vector. Returns null for empty geometries.
+     *
+     * @return some point on the geometry
+     */
+    public abstract Vector arbitraryPoint();
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
@@ -199,7 +207,7 @@ public abstract class BaseGeometry<TActual extends BaseGeometry> implements Geom
     //<editor-fold defaultstate="collapsed" desc="UTIL">
     /**
      * Returns the {@link GeometryType} to match this geometry.
-     * 
+     *
      * @return enum item of GeometryType
      */
     public abstract GeometryType getGeometryType();

@@ -268,6 +268,11 @@ public class GeometryString<TEdge extends OrientedGeometry<TEdge>> extends Orien
                 return _edges.get(n-1).getEnd();
         }
     }
+    
+     @Override
+    public Vector arbitraryPoint() {
+        return _edges.isEmpty() ? null : _edges.get(0).getStart();
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

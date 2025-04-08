@@ -167,6 +167,11 @@ public class Circle extends CyclicGeometry<Circle> {
     public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
         throw new UnsupportedOperationException("Interior intersection not yet implemented for Circle");
     }
+    
+      @Override
+    public Vector arbitraryPoint() {
+        return Vector.add(_center, Vector.up(_radius));
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

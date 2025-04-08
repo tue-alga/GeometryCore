@@ -94,7 +94,18 @@ public class GeometryGroup<TPart extends BaseGeometry<TPart>> extends BaseGeomet
             intersections.addAll(part.intersect(otherGeom, prec));
         }
     }
-//</editor-fold>
+
+    @Override
+    public Vector arbitraryPoint() {
+        for (BaseGeometry p : _parts) {
+            Vector v = p.arbitraryPoint();
+            if (v != null) {
+                return v;
+            }
+        }
+        return null;
+    }
+    //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
     @Override

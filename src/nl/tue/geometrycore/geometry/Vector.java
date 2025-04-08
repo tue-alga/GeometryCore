@@ -7,6 +7,7 @@
 package nl.tue.geometrycore.geometry;
 
 import java.util.List;
+import nl.tue.geometrycore.geometry.mix.GeometryGroup;
 import nl.tue.geometrycore.util.DoubleUtil;
 
 /**
@@ -306,6 +307,36 @@ public class Vector extends BaseGeometry<Vector> {
         if (other.onBoundary(this, prec)) {
             intersections.add(clone());
         }
+    }
+    
+    /**
+     * Tests whether this point stabs an object. A geometric object is stabbed, if
+     * the point is (approximately) equal for point objects, if the point is
+     * (approximately) on the boundary for any nonpoint object, or if the point
+     * is in the interior (for cyclic geometries).
+     *
+     * @param geom The geometry to stab
+     * @param precision The desired precision
+     * @return true iff the geometric object is stabbed by the given point
+     */
+    public boolean stabs(BaseGeometry geom, double precision) {
+        if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
+            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
+                if (stabs(bg, precision)) {
+                    return true;
+                }
+            }
+            return false;
+        } else if (geom.getGeometryType().isCyclic()) {
+            return ((CyclicGeometry) geom).contains(this, precision);
+        } else {
+            return geom.onBoundary(this, precision);
+        }
+    }
+    
+    @Override
+    public Vector arbitraryPoint() {
+        return this;
     }
     //</editor-fold>
 

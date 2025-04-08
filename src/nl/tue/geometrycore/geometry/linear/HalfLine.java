@@ -253,6 +253,11 @@ public class HalfLine extends BaseGeometry<HalfLine> implements InfiniteGeometry
             }
         }
     }
+    
+    @Override
+    public Vector arbitraryPoint() {
+        return _origin;
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

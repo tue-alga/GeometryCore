@@ -8,13 +8,10 @@ package nl.tue.geometrycore.datastructures.quadtree;
 
 import java.util.ArrayList;
 import java.util.List;
-import nl.tue.geometrycore.geometry.BaseGeometry;
-import nl.tue.geometrycore.geometry.CyclicGeometry;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
-import nl.tue.geometrycore.geometry.GeometryType;
 import nl.tue.geometrycore.geometry.Vector;
+import nl.tue.geometrycore.geometry.linear.Polygon;
 import nl.tue.geometrycore.geometry.linear.Rectangle;
-import nl.tue.geometrycore.geometry.mix.GeometryGroup;
 
 /**
  * Provides a simple quad-tree implementation for finding geometric objects. It
@@ -32,10 +29,10 @@ import nl.tue.geometrycore.geometry.mix.GeometryGroup;
  * @param <T> the class of objects stored in the priority queue
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class QuadTree<T extends GeometryConvertable> {
+public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T> {
 
-    private final QuadNode<T> _root;
-    private final int _maxDepth;
+    protected final QuadNode<T> _root;
+    protected final int _maxDepth;
 
     /**
      * Constructs a quad-tree for the given bounding box and maximum depth.
@@ -48,11 +45,19 @@ public class QuadTree<T extends GeometryConvertable> {
         _maxDepth = maxDepth;
     }
 
+    public QuadNode<T> getRoot() {
+        return _root;
+    }
+    
+    public int getMaxDepth() {
+        return _maxDepth;
+    }
+
     public QuadNode<T> find(T elt) {
         return find(elt, false);
     }
 
-    private QuadNode<T> find(T elt, boolean extend) {
+    protected QuadNode<T> find(T elt, boolean extend) {
         Rectangle b = Rectangle.byBoundingBox(elt);
         QuadNode<T> n = _root;
         int d = 0;
@@ -135,32 +140,33 @@ public class QuadTree<T extends GeometryConvertable> {
         return n._elts.contains(elt);
     }
 
+    @Override
+    public void insert(T elt) {
+        insertElement(elt);
+    }
+
     /**
      * Inserts the given element into the quad-tree.
      *
      * @param elt element to insert
+     * @return The node of the quadtree storing the element
      */
-    public QuadNode<T> insert(T elt) {
+    public QuadNode<T> insertElement(T elt) {
         QuadNode<T> n = find(elt, true);
         n._elts.add(elt);
         return n;
     }
 
-    /**
-     * Removes the specified element from the quad-tree.
-     *
-     * @param elt the element to be removed
-     * @return true iff the element was found
-     */
+    @Override
     public boolean remove(T elt) {
         QuadNode<T> n = find(elt, false);
         if (n == null) {
             return false;
         }
-        return remove(elt, n);
+        return removeElement(elt, n);
     }
 
-    public boolean remove(T elt, QuadNode<T> n) {
+    public boolean removeElement(T elt, QuadNode<T> n) {
         boolean result = n._elts.remove(elt);
 
         // trim the tree
@@ -182,134 +188,148 @@ public class QuadTree<T extends GeometryConvertable> {
         return result;
     }
 
-    /**
-     * Finds all elements that are fully contained within the specified
-     * rectangle. Time is proportional to the number of leaves that intersect
-     * the rectangle, the number of elements on the path to these leaves, and
-     * their geometric complexity.
-     *
-     * @param R rectangle in which to search for elements
-     * @param prec desired precision; use negative values for excluding the
-     * rectangle boundary
-     * @return a list of the contained elements
-     */
-    public List<T> findContainment(Rectangle R, double prec) {
+    @Override
+    public List<T> findContained(Rectangle rect, double precision) {
         List<T> result = new ArrayList();
-        findContainmentRecursive(result, _root, R, prec);
+        findContained(result, _root, rect, precision);
         return result;
     }
 
-    private void findContainmentRecursive(List<T> result, QuadNode<T> n, Rectangle R, double prec) {
+    private void findContained(List<T> result, QuadNode<T> n, Rectangle rect, double precision) {
 
-        if (n == null || !n._fullRect.overlaps(R, prec)) {
+        if (n == null || !n._fullRect.overlaps(rect, precision)) {
             // no node
             // or disjoint
             return;
         }
 
         // elements of this node
-        if (R.containsCompletely(n._fullRect, prec)) {
+        if (rect.containsCompletely(n._fullRect, precision)) {
             result.addAll(n._elts);
         } else {
             for (T elt : n._elts) {
-                if (R.containsCompletely(elt, prec)) {
+                if (rect.containsCompletely(elt, precision)) {
                     result.add(elt);
                 }
             }
         }
 
         // elements of children
-        findContainmentRecursive(result, n._LB, R, prec);
-        findContainmentRecursive(result, n._RB, R, prec);
-        findContainmentRecursive(result, n._LT, R, prec);
-        findContainmentRecursive(result, n._RT, R, prec);
+        findContained(result, n._LB, rect, precision);
+        findContained(result, n._RB, rect, precision);
+        findContained(result, n._LT, rect, precision);
+        findContained(result, n._RT, rect, precision);
     }
 
-    /**
-     * Finds all elements that overlap the specified rectangle. Note that for
-     * cyclic geometries (polygons and such), overlap with the interior is also
-     * considered. Time is proportional to the number of leaves that intersect
-     * the rectangle, the number of elements on the path to these leaves, and
-     * their geometric complexity.
-     *
-     * @param R rectangle with which to search for elements
-     * @param prec desired precision; use negative values for excluding the
-     * rectangle boundary
-     * @return a list of the contained elements
-     */
-    public List<T> findOverlap(Rectangle R, double prec) {
+    @Override
+    public List<T> findContained(Polygon convex, double precision) {
         List<T> result = new ArrayList();
-        findOverlapRecursive(result, _root, R, prec);
+        findContained(result, _root, convex, precision);
         return result;
     }
 
-    private void findOverlapRecursive(List<T> result, QuadNode<T> n, Rectangle R, double prec) {
+    private void findContained(List<T> result, QuadNode<T> n, Polygon convex, double precision) {
 
-        if (n == null || !n._fullRect.overlaps(R, prec)) {
+        if (n == null || !convex.convexOverlaps(n._fullRect, precision)) {
             // no node
             // or disjoint
             return;
         }
 
         // elements of this node
-        if (R.containsCompletely(n._fullRect, prec)) {
+        if (convex.convexContains(n._fullRect, precision)) {
             result.addAll(n._elts);
         } else {
             for (T elt : n._elts) {
-                if (overlaps(R, elt.toGeometry(), prec)) {
+                if (convex.convexContains(elt.toGeometry(), precision)) {
                     result.add(elt);
                 }
             }
         }
 
         // elements of children
-        findOverlapRecursive(result, n._LB, R, prec);
-        findOverlapRecursive(result, n._RB, R, prec);
-        findOverlapRecursive(result, n._LT, R, prec);
-        findOverlapRecursive(result, n._RT, R, prec);
+        findContained(result, n._LB, convex, precision);
+        findContained(result, n._RB, convex, precision);
+        findContained(result, n._LT, convex, precision);
+        findContained(result, n._RT, convex, precision);
     }
 
-    private boolean overlaps(Rectangle R, BaseGeometry geom, double prec) {
-        if (R.containsCompletely(geom, prec)) {
-            return true;
-        } else if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
-            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
-                if (overlaps(R, bg, prec)) {
-                    return true;
-                }
-            }
-            return false;
-        } else if (geom.getGeometryType().isCyclic() && ((CyclicGeometry) geom).contains(R.center(), prec)) {
-            // element has surface area and contains a point of the query (so, may completely contain)
-            return true;
-        } else {
-            // there is a boundary intersection between query and the element
-            // NB: for cyclic geometries, full containment has been excluded, 
-            // so if there is overlap there must be a boundary intersection
-            return !R.intersect(geom, prec).isEmpty();
-        }
-    }
-
-    /**
-     * Finds all elements that overlap the specified point. Note that for cyclic
-     * geometries (polygons and such), overlap with the interior is also
-     * considered. Time is proportional to the number of leaves that intersect
-     * the rectangle, the number of elements on the path to these leaves, and
-     * their geometric complexity.
-     *
-     * @param pt point with which to search for elements
-     * @param prec desired precision
-     * @return a list of the contained elements
-     */
-    public List<T> findStabbed(Vector pt, double prec) {
+    @Override
+    public List<T> findOverlapping(Rectangle rect, double precision) {
         List<T> result = new ArrayList();
-        findStabbedRecursive(result, _root, pt, prec);
+        findOverlappingRecursive(result, _root, rect, precision);
         return result;
     }
 
-    private void findStabbedRecursive(List<T> result, QuadNode<T> n, Vector pt, double prec) {
+    private void findOverlappingRecursive(List<T> result, QuadNode<T> n, Rectangle rect, double precision) {
 
-        if (n == null || !n._fullRect.contains(pt, prec)) {
+        if (n == null || !n._fullRect.overlaps(rect, precision)) {
+            // no node
+            // or disjoint
+            return;
+        }
+
+        // elements of this node
+        if (rect.containsCompletely(n._fullRect, precision)) {
+            result.addAll(n._elts);
+        } else {
+            for (T elt : n._elts) {
+                if (rect.overlaps(elt.toGeometry(), precision)) {
+                    result.add(elt);
+                }
+            }
+        }
+
+        // elements of children
+        findOverlappingRecursive(result, n._LB, rect, precision);
+        findOverlappingRecursive(result, n._RB, rect, precision);
+        findOverlappingRecursive(result, n._LT, rect, precision);
+        findOverlappingRecursive(result, n._RT, rect, precision);
+    }
+    
+    @Override
+    public List<T> findOverlapping(Polygon convex, double precision) {
+        List<T> result = new ArrayList();
+        findOverlappingRecursive(result, _root, convex, precision);
+        return result;
+    }
+
+    private void findOverlappingRecursive(List<T> result, QuadNode<T> n, Polygon convex, double precision) {
+
+        if (n == null || !n._fullRect.overlaps(convex, precision)) {
+            // no node
+            // or disjoint
+            return;
+        }
+
+        // elements of this node
+        if (convex.convexContains(n._fullRect, precision)) {
+            result.addAll(n._elts);
+        } else {
+            for (T elt : n._elts) {
+                if (convex.convexOverlaps(elt.toGeometry(), precision)) {
+                    result.add(elt);
+                }
+            }
+        }
+
+        // elements of children
+        findOverlappingRecursive(result, n._LB, convex, precision);
+        findOverlappingRecursive(result, n._RB, convex, precision);
+        findOverlappingRecursive(result, n._LT, convex, precision);
+        findOverlappingRecursive(result, n._RT, convex, precision);
+    }
+
+    @Override
+    public List<T> findStabbed(Vector point, double precision) {
+        List<T> result = new ArrayList();
+        findStabbedRecursive(result, _root, point, precision);
+        return result;
+    }
+
+    private void findStabbedRecursive(List<T> result, QuadNode<T> n, Vector point, double precision) {
+
+        if (n == null || !n._fullRect.contains(point, precision)) {
             // no node
             // or disjoint
             return;
@@ -317,30 +337,15 @@ public class QuadTree<T extends GeometryConvertable> {
 
         // elements of this node
         for (T elt : n._elts) {
-            if (isStabbed(pt, elt.toGeometry(), prec)) {
+            if (point.stabs(elt.toGeometry(), precision)) {
                 result.add(elt);
             }
         }
 
         // elements of children
-        findStabbedRecursive(result, n._LB, pt, prec);
-        findStabbedRecursive(result, n._RB, pt, prec);
-        findStabbedRecursive(result, n._LT, pt, prec);
-        findStabbedRecursive(result, n._RT, pt, prec);
-    }
-
-    private boolean isStabbed(Vector pt, BaseGeometry geom, double prec) {
-        if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
-            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
-                if (isStabbed(pt, bg, prec)) {
-                    return true;
-                }
-            }
-            return false;
-        } else if (geom.getGeometryType().isCyclic()) {
-            return ((CyclicGeometry) geom).contains(pt, prec);
-        } else {
-            return geom.onBoundary(pt, prec);
-        }
+        findStabbedRecursive(result, n._LB, point, precision);
+        findStabbedRecursive(result, n._RB, point, precision);
+        findStabbedRecursive(result, n._LT, point, precision);
+        findStabbedRecursive(result, n._RT, point, precision);
     }
 }

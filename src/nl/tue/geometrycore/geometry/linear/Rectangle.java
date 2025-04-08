@@ -360,7 +360,7 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
         }
 
         return true;
-    }    
+    }
 
     @Override
     public boolean onBoundary(Vector point, double prec) {
@@ -561,6 +561,38 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
         }
     }
 
+    public boolean overlaps(BaseGeometry geom) {
+        return overlaps(geom, DoubleUtil.EPS);
+    }
+
+    /**
+     * Tests whether this rectangle overlaps an object. For cyclic geometries,
+     * the interior is to be included in the overlap. For example, a polygon
+     * that fully contains the given rectangle is also to be returned.
+     *
+     * @param geom The geometry to overlap with
+     * @param precision The desired precision
+     * @return true iff the geometric object overlaps the given rectangle
+     */
+    public boolean overlaps(BaseGeometry geom, double precision) {
+        // Note that, either we get a boundary intersection, or one geometry is contained fully in the other.
+        // we catch the one-contained-in-other case by explicitly testing for an arbitrary point
+        if (contains(geom.arbitraryPoint(), precision)) {
+            return true;
+        } else if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
+            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
+                if (overlaps(bg, precision)) {
+                    return true;
+                }
+            }
+            return false;
+        } else if (geom.getGeometryType().isCyclic() && ((CyclicGeometry) geom).contains(this.leftBottom(), precision)) {
+            return true;
+        } else {
+            return !intersect(geom, precision).isEmpty();
+        }
+    }
+
     /**
      * Constructs a line segment to represent the left side of the rectangle.
      *
@@ -645,7 +677,13 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
 
     @Override
     public void intersectInterior(BaseGeometry other, double prec, List<BaseGeometry> intersections) {
-        throw new UnsupportedOperationException("Interior intersection not yet implemented for Rectangle");
+        throw new UnsupportedOperationException("NYI");
+    }
+    
+    
+    @Override
+    public Vector arbitraryPoint() {
+        return isEmpty() ? null : leftBottom();
     }
     //</editor-fold>
 

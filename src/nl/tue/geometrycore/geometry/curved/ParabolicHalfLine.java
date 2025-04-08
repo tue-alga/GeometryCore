@@ -300,6 +300,11 @@ public class ParabolicHalfLine extends BaseGeometry<ParabolicHalfLine> implement
             return new ParabolicSegment(new LineSegment(getBasePointAtCurvePoint(first), getBasePointAtCurvePoint(last)), _focus);
         }
     }
+
+    @Override
+    public Vector arbitraryPoint() {
+        throw new UnsupportedOperationException("NYI");
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">    

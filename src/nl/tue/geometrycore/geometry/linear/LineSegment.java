@@ -270,6 +270,12 @@ public class LineSegment extends OrientedGeometry<LineSegment> {
     public Vector getPointAt(double fraction) {
         return Vector.add(Vector.multiply((1-fraction), _start), Vector.multiply(fraction, _end));
     }
+    
+    
+    @Override
+    public Vector arbitraryPoint() {
+        return _start;
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">

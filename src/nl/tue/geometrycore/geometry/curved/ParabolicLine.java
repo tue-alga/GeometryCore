@@ -18,8 +18,8 @@ import nl.tue.geometrycore.geometry.linear.Rectangle;
 import nl.tue.geometrycore.util.DoubleUtil;
 
 /**
- * A parabolic arc, defined by a focus point and a base line (the
- * directrix). The focus point is assumed to not lie on the directrix.
+ * A parabolic arc, defined by a focus point and a base line (the directrix).
+ * The focus point is assumed to not lie on the directrix.
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
@@ -32,9 +32,9 @@ public class ParabolicLine extends BaseGeometry<ParabolicLine> implements Infini
 
     //<editor-fold defaultstate="collapsed" desc="CONSTRUCTORS">
     /**
-     * Constructs a parabolic line for the given base and focus. Note that
-     * these objects are stored directly, so changing the given objects will
-     * change the parabolic arc.
+     * Constructs a parabolic line for the given base and focus. Note that these
+     * objects are stored directly, so changing the given objects will change
+     * the parabolic arc.
      *
      * @param base the base line
      * @param focus the focus point
@@ -45,8 +45,8 @@ public class ParabolicLine extends BaseGeometry<ParabolicLine> implements Infini
     }
 
     /**
-     * Constructs the parabolic line that extends the given parabolic
-     * halfline in the implied direction of its base.
+     * Constructs the parabolic line that extends the given parabolic halfline
+     * in the implied direction of its base.
      *
      * @param phl the halfline to be extended
      * @return the extended parabolic line
@@ -56,8 +56,8 @@ public class ParabolicLine extends BaseGeometry<ParabolicLine> implements Infini
     }
 
     /**
-     * Constructs the parabolic line that extends the given parabolic
-     * segment in the implied direction of its base.
+     * Constructs the parabolic line that extends the given parabolic segment in
+     * the implied direction of its base.
      *
      * @param ps the segment to be extended
      * @return the extended parabolic line
@@ -398,6 +398,11 @@ public class ParabolicLine extends BaseGeometry<ParabolicLine> implements Infini
         }
 
         return new ParabolicSegment(new LineSegment(getBasePointAtCurvePoint(first), getBasePointAtCurvePoint(last)), _focus);
+    }
+
+    @Override
+    public Vector arbitraryPoint() {
+        throw new UnsupportedOperationException("NYI");
     }
     //</editor-fold>
 

@@ -17,6 +17,11 @@ import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.CyclicGeometry;
 import nl.tue.geometrycore.geometry.GeometryType;
 import nl.tue.geometrycore.geometry.Vector;
+import nl.tue.geometrycore.geometry.curved.Circle;
+import nl.tue.geometrycore.geometry.curved.CircularArc;
+import nl.tue.geometrycore.geometry.mix.GeometryCycle;
+import nl.tue.geometrycore.geometry.mix.GeometryGroup;
+import nl.tue.geometrycore.geometry.mix.GeometryString;
 import nl.tue.geometrycore.util.DoubleUtil;
 
 /**
@@ -314,6 +319,167 @@ public class Polygon extends CyclicGeometry<Polygon> {
         }
     }
 
+    public boolean convexContains(BaseGeometry geom) {
+        return convexContains(geom, DoubleUtil.EPS);
+    }
+
+    /**
+     * Tests whether this convex polygon fully contains an object. This
+     * operation works only for convex polygons, and is designed for polygons of
+     * low complexity (e.g. triangles or quadrilaterals).
+     *
+     * @param geom The geometry that is to be contained
+     * @param precision The desired precision
+     * @return true iff the rectangle wholly encompasses the given object
+     */
+    public boolean convexContains(BaseGeometry geom, double precision) {
+
+        switch (geom.getGeometryType()) {
+            case VECTOR:
+                return convexContainsPoint((Vector) geom, precision);
+            case LINESEGMENT: {
+                // we know the start point is inside, so just check other end
+                LineSegment L = (LineSegment) geom;
+                return convexContainsPoint(L.getStart())
+                        && convexContainsPoint(L.getEnd());
+            }
+            case HALFLINE:
+            case LINE: {
+                // infinite geometries cannot be contained in a finite polygon
+                return false;
+            }
+            case RECTANGLE: {
+                Rectangle R = (Rectangle) geom;
+                for (Vector v : R.corners()) {
+                    if (!convexContainsPoint(v, precision)) {
+                        return false;
+                    }
+                }
+                // all four corners inside
+                return true;
+            }
+            case POLYLINE: {
+                for (LineSegment ls : ((PolyLine) geom).edges()) {
+                    if (!convexContains(ls, precision)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            case POLYGON: {
+                for (LineSegment ls : ((Polygon) geom).edges()) {
+                    if (!convexContains(ls, precision)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            case CIRCULARARC: {
+                CircularArc A = (CircularArc) geom;
+                if (!convexContainsPoint(A.getStart(), precision)
+                        || !convexContainsPoint(A.getEnd(), precision)) {
+                    return false;
+                }
+                // both endpoints inside (or on) boundary
+                // just need to make sure it doesn't curve out
+                if (A.getCenter() == null) {
+                    // linesegment...
+                    return true;
+                }
+
+                // TODO: perhaps this can be done more efficiently...
+                // NB: with the polygon being convex & the arc properly curved, 
+                // any and all intersections must be points                
+                // effectively, we chop it up into arc pieces, and test each midpoint
+                List<BaseGeometry> is = A.intersect(this);
+                List<Vector> pts = new ArrayList();
+                for (BaseGeometry bg : is) {
+                    pts.add((Vector) bg);
+                }
+                pts.add(A.getStart());
+                pts.add(A.getEnd());
+                boolean ccw = A.isCounterclockwise();
+                Vector center = A.getCenter();
+                Vector arm = ccw ? A.getStartArm() : A.getEndArm();
+                arm.normalize();
+                pts.sort((a, b) -> Double.compare(
+                        arm.computeCounterClockwiseAngleTo(Vector.subtract(a, center), false, true),
+                        arm.computeCounterClockwiseAngleTo(Vector.subtract(b, center), false, true)));
+                for (int i = 0; i < pts.size(); i++) {
+                    CircularArc prt = new CircularArc(center, pts.get(i), pts.get(i + 1), true);
+                    if (!convexContainsPoint(prt.getPointAt(0.5), precision)) {
+                        return false;
+                    }
+                }
+                return true;
+
+            }
+            case CIRCLE: {
+                Circle C = (Circle) geom;
+                return convexContainsPoint(C.getCenter(), precision)
+                        && closestPoint(C.getCenter()).distanceTo(C.getCenter()) <= C.getRadius() + precision;
+            }
+            case GEOMETRYSTRING:
+                for (BaseGeometry bg : ((GeometryString<?>) geom).edges()) {
+                    if (!convexContains(bg, precision)) {
+                        return false;
+                    }
+                }
+                return true;
+            case GEOMETRYCYCLE:
+                for (BaseGeometry bg : ((GeometryCycle<?>) geom).edges()) {
+                    if (!convexContains(bg, precision)) {
+                        return false;
+                    }
+                }
+                return true;
+            case GEOMETRYGROUP: {
+                for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
+                    if (!convexContains(bg, precision)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            default:
+                throw new UnsupportedOperationException("Unsupported geometry type: " + geom.getGeometryType());
+        }
+    }
+
+    public boolean convexOverlaps(BaseGeometry geom) {
+        return convexOverlaps(geom, DoubleUtil.EPS);
+    }
+
+    /**
+     * Tests whether this convex polygon overlaps an object. For cyclic
+     * geometries, the interior is to be included in the overlap. For example, a
+     * polygon that fully contains the given polygon is also to be returned.
+     * This operation works only for convex polygons, and is designed for
+     * polygons of low complexity (e.g. triangles or quadrilaterals).
+     *
+     * @param geom The geometry to overlap with
+     * @param precision The desired precision
+     * @return true iff the geometric object overlaps the given convex polygon
+     */
+    public boolean convexOverlaps(BaseGeometry geom, double precision) {
+        // Note that, either we get a boundary intersection, or one geometry is contained fully in the other.
+        // we catch the one-contained-in-other case by explicitly testing for an arbitrary point
+        if (convexContainsPoint(geom.arbitraryPoint(), precision)) {
+            return true;
+        } else if (geom.getGeometryType() == GeometryType.GEOMETRYGROUP) {
+            for (BaseGeometry bg : ((GeometryGroup<?>) geom).getParts()) {
+                if (convexOverlaps(bg, precision)) {
+                    return true;
+                }
+            }
+            return false;
+        } else if (geom.getGeometryType().isCyclic() && ((CyclicGeometry) geom).contains(vertex(0), precision)) {
+            return true;
+        } else {
+            return !intersect(geom, precision).isEmpty();
+        }
+    }
+
     /**
      * Computes the centroid of the polygon, assuming a planar polygon. Returns
      * null if the polygon has no vertices.
@@ -544,8 +710,7 @@ public class Polygon extends CyclicGeometry<Polygon> {
         }
 
     }
-    
-    
+
     /**
      * Normalizes the index to the range [0,n) where n is the number of vertices
      * (or edges) of the polygon.
@@ -583,6 +748,12 @@ public class Polygon extends CyclicGeometry<Polygon> {
      */
     public int previousIndex(int index) {
         return index(index - 1);
+    }
+    
+    
+    @Override
+    public Vector arbitraryPoint() {
+        return _vertices.isEmpty() ? null : _vertices.get(0);
     }
     //</editor-fold>
 
