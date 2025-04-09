@@ -6,8 +6,7 @@
  */
 package nl.tue.geometrycore.datastructures.quadtree;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Consumer;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.Polygon;
@@ -29,7 +28,7 @@ import nl.tue.geometrycore.geometry.linear.Rectangle;
  * @param <T> the class of objects stored in the priority queue
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T> {
+public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
 
     protected final QuadNode<T> _root;
     protected final int _maxDepth;
@@ -48,7 +47,7 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
     public QuadNode<T> getRoot() {
         return _root;
     }
-    
+
     public int getMaxDepth() {
         return _maxDepth;
     }
@@ -189,13 +188,11 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
     }
 
     @Override
-    public List<T> findContained(Rectangle rect, double precision) {
-        List<T> result = new ArrayList();
-        findContained(result, _root, rect, precision);
-        return result;
+    public void findContained(Rectangle rect, double precision, Consumer<? super T> action) {
+        findContained(_root, rect, precision, action);
     }
 
-    private void findContained(List<T> result, QuadNode<T> n, Rectangle rect, double precision) {
+    private void findContained(QuadNode<T> n, Rectangle rect, double precision, Consumer<? super T> action) {
 
         if (n == null || !n._fullRect.overlaps(rect, precision)) {
             // no node
@@ -205,30 +202,28 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
 
         // elements of this node
         if (rect.containsCompletely(n._fullRect, precision)) {
-            result.addAll(n._elts);
+            n._elts.forEach(action);
         } else {
             for (T elt : n._elts) {
                 if (rect.containsCompletely(elt, precision)) {
-                    result.add(elt);
+                    action.accept(elt);
                 }
             }
         }
 
         // elements of children
-        findContained(result, n._LB, rect, precision);
-        findContained(result, n._RB, rect, precision);
-        findContained(result, n._LT, rect, precision);
-        findContained(result, n._RT, rect, precision);
+        findContained(n._LB, rect, precision, action);
+        findContained(n._RB, rect, precision, action);
+        findContained(n._LT, rect, precision, action);
+        findContained(n._RT, rect, precision, action);
     }
 
     @Override
-    public List<T> findContained(Polygon convex, double precision) {
-        List<T> result = new ArrayList();
-        findContained(result, _root, convex, precision);
-        return result;
+    public void findContained(Polygon convex, double precision, Consumer<? super T> action) {
+        findContained(_root, convex, precision, action);
     }
 
-    private void findContained(List<T> result, QuadNode<T> n, Polygon convex, double precision) {
+    private void findContained(QuadNode<T> n, Polygon convex, double precision, Consumer<? super T> action) {
 
         if (n == null || !convex.convexOverlaps(n._fullRect, precision)) {
             // no node
@@ -238,30 +233,28 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
 
         // elements of this node
         if (convex.convexContains(n._fullRect, precision)) {
-            result.addAll(n._elts);
+            n._elts.forEach(action);
         } else {
             for (T elt : n._elts) {
                 if (convex.convexContains(elt.toGeometry(), precision)) {
-                    result.add(elt);
+                    action.accept(elt);
                 }
             }
         }
 
         // elements of children
-        findContained(result, n._LB, convex, precision);
-        findContained(result, n._RB, convex, precision);
-        findContained(result, n._LT, convex, precision);
-        findContained(result, n._RT, convex, precision);
+        findContained(n._LB, convex, precision, action);
+        findContained(n._RB, convex, precision, action);
+        findContained(n._LT, convex, precision, action);
+        findContained(n._RT, convex, precision, action);
     }
 
     @Override
-    public List<T> findOverlapping(Rectangle rect, double precision) {
-        List<T> result = new ArrayList();
-        findOverlappingRecursive(result, _root, rect, precision);
-        return result;
+    public void findOverlapping(Rectangle rect, double precision, Consumer<? super T> action) {
+        findOverlappingRecursive(_root, rect, precision, action);
     }
 
-    private void findOverlappingRecursive(List<T> result, QuadNode<T> n, Rectangle rect, double precision) {
+    private void findOverlappingRecursive(QuadNode<T> n, Rectangle rect, double precision, Consumer<? super T> action) {
 
         if (n == null || !n._fullRect.overlaps(rect, precision)) {
             // no node
@@ -271,30 +264,28 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
 
         // elements of this node
         if (rect.containsCompletely(n._fullRect, precision)) {
-            result.addAll(n._elts);
+            n._elts.forEach(action);
         } else {
             for (T elt : n._elts) {
                 if (rect.overlaps(elt.toGeometry(), precision)) {
-                    result.add(elt);
+                    action.accept(elt);
                 }
             }
         }
 
         // elements of children
-        findOverlappingRecursive(result, n._LB, rect, precision);
-        findOverlappingRecursive(result, n._RB, rect, precision);
-        findOverlappingRecursive(result, n._LT, rect, precision);
-        findOverlappingRecursive(result, n._RT, rect, precision);
-    }
-    
-    @Override
-    public List<T> findOverlapping(Polygon convex, double precision) {
-        List<T> result = new ArrayList();
-        findOverlappingRecursive(result, _root, convex, precision);
-        return result;
+        findOverlappingRecursive(n._LB, rect, precision, action);
+        findOverlappingRecursive(n._RB, rect, precision, action);
+        findOverlappingRecursive(n._LT, rect, precision, action);
+        findOverlappingRecursive(n._RT, rect, precision, action);
     }
 
-    private void findOverlappingRecursive(List<T> result, QuadNode<T> n, Polygon convex, double precision) {
+    @Override
+    public void findOverlapping(Polygon convex, double precision, Consumer<? super T> action) {
+        findOverlappingRecursive(_root, convex, precision, action);
+    }
+
+    private void findOverlappingRecursive(QuadNode<T> n, Polygon convex, double precision, Consumer<? super T> action) {
 
         if (n == null || !n._fullRect.overlaps(convex, precision)) {
             // no node
@@ -304,30 +295,28 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
 
         // elements of this node
         if (convex.convexContains(n._fullRect, precision)) {
-            result.addAll(n._elts);
+            n._elts.forEach(action);
         } else {
             for (T elt : n._elts) {
                 if (convex.convexOverlaps(elt.toGeometry(), precision)) {
-                    result.add(elt);
+                    action.accept(elt);
                 }
             }
         }
 
         // elements of children
-        findOverlappingRecursive(result, n._LB, convex, precision);
-        findOverlappingRecursive(result, n._RB, convex, precision);
-        findOverlappingRecursive(result, n._LT, convex, precision);
-        findOverlappingRecursive(result, n._RT, convex, precision);
+        findOverlappingRecursive(n._LB, convex, precision, action);
+        findOverlappingRecursive(n._RB, convex, precision, action);
+        findOverlappingRecursive(n._LT, convex, precision, action);
+        findOverlappingRecursive(n._RT, convex, precision, action);
     }
 
     @Override
-    public List<T> findStabbed(Vector point, double precision) {
-        List<T> result = new ArrayList();
-        findStabbedRecursive(result, _root, point, precision);
-        return result;
+    public void findStabbed(Vector point, double precision, Consumer<? super T> action) {
+        findStabbedRecursive(_root, point, precision, action);
     }
 
-    private void findStabbedRecursive(List<T> result, QuadNode<T> n, Vector point, double precision) {
+    private void findStabbedRecursive(QuadNode<T> n, Vector point, double precision, Consumer<? super T> action) {
 
         if (n == null || !n._fullRect.contains(point, precision)) {
             // no node
@@ -338,14 +327,14 @@ public class QuadTree<T extends GeometryConvertable> implements GeometryStore<T>
         // elements of this node
         for (T elt : n._elts) {
             if (point.stabs(elt.toGeometry(), precision)) {
-                result.add(elt);
+                action.accept(elt);
             }
         }
 
         // elements of children
-        findStabbedRecursive(result, n._LB, point, precision);
-        findStabbedRecursive(result, n._RB, point, precision);
-        findStabbedRecursive(result, n._LT, point, precision);
-        findStabbedRecursive(result, n._RT, point, precision);
+        findStabbedRecursive(n._LB, point, precision, action);
+        findStabbedRecursive(n._RB, point, precision, action);
+        findStabbedRecursive(n._LT, point, precision, action);
+        findStabbedRecursive(n._RT, point, precision, action);
     }
 }
