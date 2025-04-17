@@ -229,8 +229,8 @@ public class LineSegment extends OrientedGeometry<LineSegment> {
                     // 3: start of this overlaps
                     // 4: end of this overlap
                     // 5: no overlap
-                    if (inSlab(intsegment._start)) {
-                        if (inSlab(intsegment._end)) {
+                    if (inSlab(intsegment._start, prec)) {
+                        if (inSlab(intsegment._end, prec)) {
                             // case 1:
                             // nothing to do
                         } else {
@@ -241,14 +241,14 @@ public class LineSegment extends OrientedGeometry<LineSegment> {
                                 intsegment._end.set(_end);
                             }
                         }
-                    } else if (inSlab(intsegment._end)) {
+                    } else if (inSlab(intsegment._end, prec)) {
                         // case 3:                    
                         if (_start.isApproximately(intsegment._end, prec)) {
                             intersections.set(i, intsegment._end);
                         } else {
                             intsegment._start.set(_start);
                         }
-                    } else if (intsegment.inSlab(_start)) {
+                    } else if (intsegment.inSlab(_start, prec)) {
                         // case 2:
                         intsegment._start.set(_start);
                         intsegment._end.set(_end);
