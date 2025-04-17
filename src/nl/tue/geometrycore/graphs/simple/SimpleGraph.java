@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
@@ -399,6 +400,29 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
         }
 
         edge._graphIndex = -1;
+    }
+
+    public void combineVertices(TVertex a, TVertex b) {
+        TEdge rem = null;
+        for (TEdge e : b._edges) {
+            if (e.isIncidentTo(a)) {
+                // skip, will be removed
+                rem = e;
+            } else if (e._end == b) {                 
+                e._end = a;
+                e._geometry.updateEnd(a);
+                a._edges.add(e);
+            } else {
+                e._start = a;
+                e._geometry.updateStart(a); 
+                a._edges.add(e);         
+            }
+        }
+        if (rem != null) {
+            removeEdge(rem);
+        }
+        b._edges.clear();
+        removeVertex(b);
     }
 
     public Pair<List<GeometryString<TGeom>>, List<GeometryCycle<TGeom>>> computeChains() {
