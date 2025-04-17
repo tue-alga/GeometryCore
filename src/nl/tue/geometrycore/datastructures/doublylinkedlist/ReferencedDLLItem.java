@@ -10,18 +10,19 @@ package nl.tue.geometrycore.datastructures.doublylinkedlist;
  * Provides a simple wrapper around objects that cannot inherit from
  * DoublyLinkedListItem or that need to be in multiple lists.
  *
- * @param <T> class of object to be stored with the list item
+ * @param <TSelf> Class of the linked-list item
+ * @param <TObj> Class of object to be stored with the list item
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class ReferencedDLLItem<T> extends DoublyLinkedListItem {
+public class ReferencedDLLItem<TSelf extends ReferencedDLLItem<TSelf,TObj>,TObj> extends DoublyLinkedListItem<TSelf> {
 
-    private final T _object;
+    private final TObj _object;
 
-    public ReferencedDLLItem(T object) {
+    public ReferencedDLLItem(TObj object) {
         _object = object;
     }
 
-    public T getObject() {
+    public TObj getObject() {
         return _object;
     }
 }
