@@ -706,7 +706,7 @@ public class Polygon extends CyclicGeometry<Polygon> {
                 break;
             }
             default:
-                throw new UnsupportedOperationException("Interior intersection not yet implemented for GeometryCycle");
+                throw new UnsupportedOperationException("Interior intersection not yet implemented for Polygon-" + other.getGeometryType());
         }
 
     }
@@ -749,8 +749,7 @@ public class Polygon extends CyclicGeometry<Polygon> {
     public int previousIndex(int index) {
         return index(index - 1);
     }
-    
-    
+
     @Override
     public Vector arbitraryPoint() {
         return _vertices.isEmpty() ? null : _vertices.get(0);
