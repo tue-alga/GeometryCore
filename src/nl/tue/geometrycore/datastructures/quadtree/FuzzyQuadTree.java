@@ -43,11 +43,14 @@ public class FuzzyQuadTree<T extends GeometryConvertable> extends QuadTree<T> {
     }
 
     @Override
-    protected QuadNode<T> find(T elt, boolean extend) {
+    protected QuadNode<T> find(QuadNode<T> n, T elt, boolean extend) {
         Rectangle b = Rectangle.byBoundingBox(elt);
-        QuadNode<T> n = _root;
-        int d = 0;
-        while (d <= _maxDepth) {
+        // sift up
+        while (n._depth > 0 && !n._fullRect.containsCompletely(b)) {
+            n = n._parent;
+        }
+        // sift down
+        while (n._depth <= _maxDepth) {
 
             Vector c = n._rect.center();
             double fx = n._rect.width() / 2.0 * _fuzziness;
@@ -64,7 +67,6 @@ public class FuzzyQuadTree<T extends GeometryConvertable> extends QuadTree<T> {
                         }
                     }
                     n = n._LB;
-                    d++;
                 } else if (b.getBottom() >= c.getY() - fy) {
                     // top
                     if (n._LT == null) {
@@ -75,7 +77,6 @@ public class FuzzyQuadTree<T extends GeometryConvertable> extends QuadTree<T> {
                         }
                     }
                     n = n._LT;
-                    d++;
                 } else {
                     return n;
                 }
@@ -91,7 +92,6 @@ public class FuzzyQuadTree<T extends GeometryConvertable> extends QuadTree<T> {
                         }
                     }
                     n = n._RB;
-                    d++;
                 } else if (b.getBottom() >= c.getY() - fy) {
                     //  top
                     if (n._RT == null) {
@@ -102,7 +102,6 @@ public class FuzzyQuadTree<T extends GeometryConvertable> extends QuadTree<T> {
                         }
                     }
                     n = n._RT;
-                    d++;
                 } else {
                     return n;
                 }

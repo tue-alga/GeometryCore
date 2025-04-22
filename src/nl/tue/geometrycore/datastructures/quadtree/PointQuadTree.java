@@ -38,7 +38,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         _root._rect = box.clone();
         _maxDepth = maxDepth;
     }
-
+    
     @Override
     public void insert(T elt) {
         QuadNode n = _root;

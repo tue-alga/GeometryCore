@@ -24,10 +24,12 @@ public class QuadNode<T extends GeometryConvertable> {
     final Rectangle _fullRect;
     final ArrayList<T> _elts = new ArrayList();
     final boolean _infLeft, _infRight, _infBottom, _infTop;
+    final int _depth;
     QuadNode<T> _LT, _LB, _RT, _RB;
 
     QuadNode(QuadNode parent, Rectangle rect, boolean infLeft, boolean infRight, boolean infBottom, boolean infTop) {
         _parent = parent;
+        _depth = parent == null ? 0 : parent._depth + 1;
         _rect = rect;
         _infLeft = infLeft;
         _infRight = infRight;

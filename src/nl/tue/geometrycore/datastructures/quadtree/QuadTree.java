@@ -53,14 +53,17 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
     }
 
     public QuadNode<T> find(T elt) {
-        return find(elt, false);
+        return find(_root, elt, false);
     }
 
-    protected QuadNode<T> find(T elt, boolean extend) {
+    protected QuadNode<T> find(QuadNode<T> n, T elt, boolean extend) {
         Rectangle b = Rectangle.byBoundingBox(elt);
-        QuadNode<T> n = _root;
-        int d = 0;
-        while (d <= _maxDepth) {
+        // sift up
+        while (n._depth > 0 && !n._fullRect.containsCompletely(b)) {
+            n = n._parent;
+        }
+        // sift down
+        while (n._depth <= _maxDepth) {
 
             Vector c = n._rect.center();
             if (b.getRight() <= c.getX()) {
@@ -75,7 +78,6 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
                         }
                     }
                     n = n._LB;
-                    d++;
                 } else if (b.getBottom() >= c.getY()) {
                     // top
                     if (n._LT == null) {
@@ -86,7 +88,6 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
                         }
                     }
                     n = n._LT;
-                    d++;
                 } else {
                     return n;
                 }
@@ -102,7 +103,6 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
                         }
                     }
                     n = n._RB;
-                    d++;
                 } else if (b.getBottom() >= c.getY()) {
                     //  top
                     if (n._RT == null) {
@@ -113,7 +113,6 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
                         }
                     }
                     n = n._RT;
-                    d++;
                 } else {
                     return n;
                 }
@@ -132,7 +131,7 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
      * @return true iff the element contained in the tree
      */
     public boolean contains(T elt) {
-        QuadNode<T> n = find(elt, false);
+        QuadNode<T> n = find(_root, elt, false);
         if (n == null) {
             return false;
         }
@@ -151,14 +150,32 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
      * @return The node of the quadtree storing the element
      */
     public QuadNode<T> insertElement(T elt) {
-        QuadNode<T> n = find(elt, true);
+        QuadNode<T> n = find(_root, elt, true);
         n._elts.add(elt);
         return n;
     }
 
+    /**
+     * "Reinserts" the given element, which is currently stored in the provided
+     * quadnode.This may be more efficient that removing and inserting
+     * separately, if the geometric change is "local".
+     *
+     * @param elt element the update
+     * @param n the current node storing the element
+     * @return The node of the quadtree storing the element after the update
+     */
+    public QuadNode<T> update(T elt, QuadNode<T> n) {
+        QuadNode<T> nn = find(n, elt, true);
+        if (nn != n) {
+            removeElement(elt, n);
+            nn._elts.add(elt);
+        }
+        return nn;
+    }
+
     @Override
     public boolean remove(T elt) {
-        QuadNode<T> n = find(elt, false);
+        QuadNode<T> n = find(_root, elt, false);
         if (n == null) {
             return false;
         }
