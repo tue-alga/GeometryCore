@@ -79,7 +79,7 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
                 System.err.println("Should not occur");
                 return null;
             case 1: {
-                // one vertex               
+                // one vertex
 //                System.err.println("CALL " + low + "-" + (high - 1) + " :: " + _vertices.get(low) + "-" + _vertices.get(high - 1));
                 TVertex u = _vertices.get(low);
 //                System.err.println("RET " + u + " << " + low + "-" + (high - 1));
@@ -104,7 +104,10 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
                 TVertex w = _vertices.get(low + 2);
                 addEdge(u, v);
                 addEdge(v, w);
-                addEdge(w, u);
+                // detects collinear by sine value
+                if (Vector.crossProduct(Vector.subtract(u, v), Vector.subtract(v, w)) != 0) {
+                    addEdge(w, u);
+                }
                 TVertex min = u.getY() <= v.getY() && u.getY() <= w.getY()
                         ? u : (v.getY() <= w.getY() ? v : w);
 //                System.err.println("RET " + min + " << " + low + "-" + (high - 1));
@@ -164,14 +167,24 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
 
                     if (u_cand != null) {
                         if (addEdge(u_cand, v)) {
-                            System.err.println("DUPLICATE EDGE -- aborting" + " << " + low + "-" + (high - 1));
-                            return null;
+                            // detects collinear by sine value
+                            if (Vector.crossProduct(Vector.subtract(u, u_cand), Vector.subtract(v, u_cand)) == 0) {
+                                _input.removeEdge(u.getEdgeTo(v));
+                            } else {
+                                System.err.println("DUPLICATE EDGE -- aborting" + " << " + low + "-" + (high - 1));
+                                return null;
+                            }
                         }
                         u = u_cand;
-                    } else {  // v_cand != null   
+                    } else {  // v_cand != null
                         if (addEdge(u, v_cand)) {
-                            System.err.println("DUPLICATE EDGE -- aborting" + " << " + low + "-" + (high - 1));
-                            return null;
+                            // detects collinear by sine value
+                            if (Vector.crossProduct(Vector.subtract(u, v_cand), Vector.subtract(v, v_cand)) == 0) {
+                                _input.removeEdge(u.getEdgeTo(v));
+                            } else {
+                                System.err.println("DUPLICATE EDGE -- aborting" + " << " + low + "-" + (high - 1));
+                                return null;
+                            }
                         }
                         v = v_cand;
                     }
@@ -245,10 +258,9 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
     private TVertex candidate(TVertex vertex, TVertex other, int mid, Side side) {
 
         Vector dir = Vector.subtract(other, vertex);
-        dir.normalize();
 
 //        System.err.println("  candidate? "+vertex+" "+other);
-        
+
         TVertex first = findFirst(vertex, dir, mid, side);
 //        System.err.println("    first "+first);
         if (first == null) {
@@ -271,7 +283,7 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
     private TVertex findFirst(TVertex vertex, Vector dir, int mid, Side side) {
 
         TVertex min = null;
-        double opt = Double.POSITIVE_INFINITY;
+        double opt = Double.NEGATIVE_INFINITY;
         for (TEdge e : vertex.getEdges()) {
             TVertex nbr = e.getOtherVertex(vertex);
             if (side == Side.LEFT && _graph_to_sorted[nbr.getGraphIndex()] >= mid) {
@@ -279,26 +291,21 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
             } else if (side == Side.RIGHT && _graph_to_sorted[nbr.getGraphIndex()] < mid) {
                 continue;
             }
-            Vector edir = Vector.subtract(nbr, vertex);
-            edir.normalize();
-            double a = side == Side.LEFT
-                    ? dir.computeCounterClockwiseAngleTo(edir, false, false)
-                    : dir.computeClockwiseAngleTo(edir, false, false);
-//            if (a > Math.PI * 2 - DoubleUtil.EPS) {
-//                a = 0;
-//            }
-            if (a < opt) {
-                min = nbr;
-                opt = a;
+            Vector e_dir = Vector.subtract(nbr, vertex);
+            var cross = Vector.crossProduct(dir, e_dir);
+            var dot = Vector.dotProduct(dir, e_dir);
+            if (cross == 0) {
+                if (dot < 0) {
+                    continue; // theta = pi
+                }
+            } else if ((side == Side.LEFT) ^ (cross > 0)) {
+                continue; // theta > pi
             }
-        }
-
-        if (min == null) {
-            return null;
-        }
-
-        if (opt >= Math.PI) {
-            return null;
+            var cos_sim = dot / (dir.length() * e_dir.length());
+            if (cos_sim > opt) {
+                min = nbr;
+                opt = cos_sim;
+            }
         }
 
         return min;
@@ -307,44 +314,36 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
     private TVertex findSecond(TVertex vertex, Vector dir, int mid, Side side) {
 
         TVertex min = null;
-        double opt = Double.POSITIVE_INFINITY;
+        double opt = Double.NEGATIVE_INFINITY;
         TVertex sec = null;
-        double sec_opt = Double.POSITIVE_INFINITY;
+        double sec_opt = Double.NEGATIVE_INFINITY;
         for (TEdge e : vertex.getEdges()) {
-
             TVertex nbr = e.getOtherVertex(vertex);
             if (side == Side.LEFT && _graph_to_sorted[nbr.getGraphIndex()] >= mid) {
                 continue;
             } else if (side == Side.RIGHT && _graph_to_sorted[nbr.getGraphIndex()] < mid) {
                 continue;
             }
-            Vector edir = Vector.subtract(nbr, vertex);
-            edir.normalize();
-            double a = side == Side.LEFT
-                    ? dir.computeCounterClockwiseAngleTo(edir, false, false)
-                    : dir.computeClockwiseAngleTo(edir, false, false);
-            
-//            System.err.println("      "+nbr+" :: "+a);
-//            if (a > Math.PI * 2 - DoubleUtil.EPS) {
-//                a = 0;
-//            }
-            if (a < opt) {
+            Vector e_dir = Vector.subtract(nbr, vertex);
+            var cross = Vector.crossProduct(dir, e_dir);
+            var dot = Vector.dotProduct(dir, e_dir);
+            if (cross == 0) {
+                if (dot < 0) {
+                    continue; // theta = pi
+                }
+            } else if ((side == Side.LEFT) ^ (cross > 0)) {
+                continue; // theta > pi
+            }
+            var cos_sim = dot / (dir.length() * e_dir.length());
+            if (cos_sim > opt) {
                 sec = min;
                 sec_opt = opt;
                 min = nbr;
-                opt = a;
-            } else if (a < sec_opt) {
+                opt = cos_sim;
+            } else if (cos_sim > sec_opt) {
                 sec = nbr;
-                sec_opt = a;
+                sec_opt = cos_sim;
             }
-        }
-
-        if (sec == null) {
-            return null;
-        }
-
-        if (sec_opt >= Math.PI) {
-            return null;
         }
 
         return sec;
@@ -353,7 +352,7 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
     private TVertex findLast(TVertex vertex, Vector dir, int mid, Side side) {
 
         TVertex min = null;
-        double opt = Double.POSITIVE_INFINITY;
+        double opt = Double.NEGATIVE_INFINITY;
         for (TEdge e : vertex.getEdges()) {
             TVertex nbr = e.getOtherVertex(vertex);
             if (side == Side.LEFT && _graph_to_sorted[nbr.getGraphIndex()] >= mid) {
@@ -361,27 +360,21 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
             } else if (side == Side.RIGHT && _graph_to_sorted[nbr.getGraphIndex()] < mid) {
                 continue;
             }
-            Vector edir = Vector.subtract(nbr, vertex);
-            edir.normalize();
-            // SWAPPED WRT find first/second
-            double a = side == Side.RIGHT
-                    ? dir.computeCounterClockwiseAngleTo(edir, false, false)
-                    : dir.computeClockwiseAngleTo(edir, false, false);
-//            if (a > Math.PI * 2 - DoubleUtil.EPS) {
-//                a = 0;
-//            }
-            if (a < opt) {
-                min = nbr;
-                opt = a;
+            Vector e_dir = Vector.subtract(nbr, vertex);
+            var cross = Vector.crossProduct(dir, e_dir);
+            var dot = Vector.dotProduct(dir, e_dir);
+            if (cross == 0) {
+                if (dot < 0) {
+                    continue; // theta = pi
+                }
+            } else if ((side == Side.LEFT) ^ (cross < 0)) { // SWAPPED WRT find first/second
+                continue; // theta >= pi
             }
-        }
-
-        if (min == null) {
-            return null;
-        }
-
-        if (opt >= Math.PI) {
-            return null;
+            var cos_sim = dot / (dir.length() * e_dir.length());
+            if (cos_sim > opt) {
+                min = nbr;
+                opt = cos_sim;
+            }
         }
 
         return min;
