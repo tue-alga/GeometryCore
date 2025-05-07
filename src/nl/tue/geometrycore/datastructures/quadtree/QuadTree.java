@@ -160,7 +160,7 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
      * quadnode.This may be more efficient that removing and inserting
      * separately, if the geometric change is "local".
      *
-     * @param elt element the update
+     * @param elt element to update
      * @param n the current node storing the element
      * @return The node of the quadtree storing the element after the update
      */
@@ -182,6 +182,16 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
         return removeElement(elt, n);
     }
 
+    /**
+     * Removes the given element, assuming it is stored in the specified node.
+     * If the element is not stored in the tree, the provided node is
+     * irrelevant. If the element is stored in a different node, it will not be
+     * removed.
+     *
+     * @param elt The geometry to remove
+     * @param n The node currently storing the element
+     * @return true iff the element was found
+     */
     public boolean removeElement(T elt, QuadNode<T> n) {
         boolean result = n._elts.remove(elt);
 

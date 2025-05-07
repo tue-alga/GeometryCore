@@ -41,7 +41,7 @@ public abstract class GeometryStore<T extends GeometryConvertable> {
     /**
      * Removes the given geometric object from the data structure.
      *
-     * @param elt The geometry to add
+     * @param elt The geometry to remove
      * @return true iff the element was found
      */
     public abstract boolean remove(T elt);
