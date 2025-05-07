@@ -281,7 +281,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     @Override
     protected void paintComponent(Graphics g) {
         _graphics = (Graphics2D) g;
-        try (RasterWriter writer = RasterWriter.graphicsWriter(_worldToView, getWidth(), getHeight(), _graphics)) {
+        try (RasterWriter writer = RasterWriter.graphicsWriter(_worldToView, getWidth(), getHeight(), _graphics, getBackground())) {
             writer.initialize();
             render(writer);
         } catch (IOException ex) {
