@@ -606,5 +606,13 @@ public class Vector extends BaseGeometry<Vector> {
 
         return new double[]{f, g};
     }
+    
+    public static boolean collinear(Vector a, Vector b, Vector c) {
+        return collinear(a,b,c,DoubleUtil.EPS);
+    }
+    
+    public static boolean collinear(Vector a, Vector b, Vector c, double eps) {
+        return DoubleUtil.close(Vector.crossProduct(b.getX() - a.getY(), b.getY() - a.getY(), c.getX() - a.getY(), c.getY() - a.getY()), eps);
+    }
     //</editor-fold>
 }
