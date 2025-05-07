@@ -156,7 +156,7 @@ public class DoubleUtil {
      * @param b factor for linear term
      * @param c factor for constant term
      * @param threshold threshold value
-     * @return the smallest positive solution; NaN if no positive solution
+     * @return the smallest solution > threshold; NaN if no such solution
      * exists
      */
     public static double solveQuadraticEquationForSmallestPositive(double a, double b, double c, double threshold) {

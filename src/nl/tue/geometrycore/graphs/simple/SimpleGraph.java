@@ -15,7 +15,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
@@ -103,7 +102,7 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     }
 
     /**
-     * Constructs a simple graph.Uses reflection to create new vertices and
+     * Constructs a simple graph. Uses reflection to create new vertices and
      * edges. The given parameters indicate the indices of the type parameters
      * for the vertex and edge type. This is mostly useful when extending the
      * simple graph to another generic class with different type parameters.
@@ -402,20 +401,57 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
         edge._graphIndex = -1;
     }
 
+    /**
+     * Splits an edge, at the given vertex, placing the new vertex at the
+     * specified location. Specifically, if e = (a,v), then it creates e=(a,n)
+     * and f=(n,v). If e = (v,a), then it creates f=(v,n) and e=(n,a). Here, f
+     * is the new edge, and n the new vertex.
+     *
+     * @param e The edge to split
+     * @param v The vertex at which to split
+     * @param loc
+     * @param geometry The geometry of the new edge
+     * @return The new edge
+     */
+    public TEdge splitEdge(TEdge e, TVertex v, Vector loc, TGeom geometry) {
+
+        TVertex n = addVertex(loc);
+        TVertex a = e.getOtherVertex(v);
+
+        v._edges.remove(e);
+        n._edges.add(e);
+
+        if (e.getEnd() == v) {
+            e._end = n;
+            return addEdge(n, v, geometry);
+        } else {
+            e._start = n;
+            return addEdge(v, n, geometry);
+        }
+    }
+
+    /**
+     * Merges the two given vertices into a single vertex. The edges and first
+     * vertex are reused, the second vertex will be removed, as will any edge
+     * connecting the given vertices.
+     *
+     * @param a Vertex to merge, this vertex is kept
+     * @param b Vertex to merge, this vertex is removed
+     */
     public void combineVertices(TVertex a, TVertex b) {
         TEdge rem = null;
         for (TEdge e : b._edges) {
             if (e.isIncidentTo(a)) {
                 // skip, will be removed
                 rem = e;
-            } else if (e._end == b) {                 
+            } else if (e._end == b) {
                 e._end = a;
                 e._geometry.updateEnd(a);
                 a._edges.add(e);
             } else {
                 e._start = a;
-                e._geometry.updateStart(a); 
-                a._edges.add(e);         
+                e._geometry.updateStart(a);
+                a._edges.add(e);
             }
         }
         if (rem != null) {
