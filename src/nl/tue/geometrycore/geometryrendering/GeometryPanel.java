@@ -431,8 +431,8 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="VIEW CONTROL">  
-    public Vector convertViewToWorld(Vector worldPosition) {
-        Point2D.Double point = new Point2D.Double(worldPosition.getX(), worldPosition.getY());
+    public Vector convertViewToWorld(Vector viewPosition) {
+        Point2D.Double point = new Point2D.Double(viewPosition.getX(), viewPosition.getY());
         try {
             _worldToView.inverseTransform(point, point);
         } catch (NoninvertibleTransformException ex) {
@@ -445,8 +445,8 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         return distance / _worldToView.getScaleX();
     }
 
-    public Vector convertWorldToView(Vector viewPosition) {
-        Point2D.Double point = new Point2D.Double(viewPosition.getX(), viewPosition.getY());
+    public Vector convertWorldToView(Vector worldPosition) {
+        Point2D.Double point = new Point2D.Double(worldPosition.getX(), worldPosition.getY());
         _worldToView.transform(point, point);
         return new Vector(point.x, point.y);
     }

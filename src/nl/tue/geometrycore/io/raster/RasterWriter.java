@@ -98,7 +98,8 @@ public class RasterWriter extends BaseWriter<BufferedImage, Graphics2D> {
         _renderClips = new ArrayList();
         _renderTransforms = new ArrayList();
 
-        _screenToView = new AffineTransform(new double[]{1, 0, 0, -1, 0, height});
+        _screenToView = graphics.getDeviceConfiguration().getDefaultTransform();
+        _screenToView.concatenate(new AffineTransform(new double[]{1, 0, 0, -1, 0, height}));
         _worldToView = worldToView;
 
         _worldview = Rectangle.byCorners(
