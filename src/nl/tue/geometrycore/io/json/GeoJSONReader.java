@@ -1,4 +1,3 @@
-
 /*
  * GeometryCore library   
  * Copyright (C) 2025   Wouter Meulemans (w.meulemans@tue.nl)
@@ -25,7 +24,10 @@ import nl.tue.geometrycore.io.ReadItem;
 import nl.tue.geometrycore.util.ClipboardUtil;
 
 /**
- * This class provides a reader for the GeoJSON format.
+ * This class provides a reader for the GeoJSON format. Note that all properties
+ * of the elements are stored purely as strings. For quoted strings, the quotes
+ * are removed. Any other values are parsed strictly as is, to be further parsed
+ * if necessary.
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
@@ -45,9 +47,9 @@ public class GeoJSONReader extends BaseReader {
     }
 
     /**
-     * Constructs the reader of a file containing the IPE XML code.
+     * Constructs the reader of a GeoJson file.
      *
-     * @param file the ipe file to be read
+     * @param file the GeoJson file to be read
      * @return new reader for the provided file
      * @throws FileNotFoundException
      */
@@ -56,10 +58,10 @@ public class GeoJSONReader extends BaseReader {
     }
 
     /**
-     * Constructs a reader for the provided string containing IPE XML code.
+     * Constructs a reader for the provided string containing GeoJson.
      *
-     * @param string IPE XML code
-     * @return new reader for the code
+     * @param string GeoJson text
+     * @return new reader for the text
      */
     public static GeoJSONReader stringReader(String string) {
         return new GeoJSONReader(new BufferedReader(new StringReader(string)));
@@ -67,10 +69,10 @@ public class GeoJSONReader extends BaseReader {
 
     /**
      * Constructs a custom reader using some buffered reader that provides the
-     * IPE XML code line by line.
+     * GeoJson.
      *
-     * @param reader buffered reader providing the IPE XML code
-     * @return new reader for the code
+     * @param reader buffered reader providing the GeoJson text
+     * @return new reader for the text
      */
     public static GeoJSONReader customReader(BufferedReader reader) {
         return new GeoJSONReader(reader);
@@ -108,6 +110,15 @@ public class GeoJSONReader extends BaseReader {
         }
     }
 
+    /**
+     * By default, all properties are read. For very large files, this may be
+     * very inefficient. This methods allows specifying precisely which
+     * properties are to be read. Set to null to read all properties.
+     *
+     * Note that property names are case sensitive.
+     *
+     * @param props Properties to be read
+     */
     public void setPropertiesOfInterest(String... props) {
         _propsToKeep = props;
     }
@@ -149,7 +160,18 @@ public class GeoJSONReader extends BaseReader {
                 break;
             }
             skipToCharacter(':');
-            StringBuilder value = new StringBuilder();
+
+            boolean interest;
+            if (_propsToKeep == null) {
+                interest = true;
+            } else {
+                interest = false;
+                for (String p : _propsToKeep) {
+                    interest = interest || p.equals(name);
+                }
+            }
+
+            StringBuilder value = interest ? new StringBuilder() : null;
             boolean instring = false;
             int accolades = 0;
             int brackets = 0;
@@ -163,7 +185,9 @@ public class GeoJSONReader extends BaseReader {
                         if (!instring) {
                             accolades++;
                         }
-                        value.append(ch);
+                        if (interest) {
+                            value.append(ch);
+                        }
                         break;
                     case '}':
                         if (!instring) {
@@ -174,57 +198,59 @@ public class GeoJSONReader extends BaseReader {
                             done = true;
                             break charloop;
                         } else {
-                            value.append(ch);
+                            if (interest) {
+                                value.append(ch);
+                            }
                         }
                         break;
                     case '[':
                         if (!instring) {
                             brackets++;
                         }
-                        value.append(ch);
+                        if (interest) {
+                            value.append(ch);
+                        }
                         break;
                     case ']':
                         if (!instring) {
                             brackets--;
                         }
-                        value.append(ch);
+                        if (interest) {
+                            value.append(ch);
+                        }
                         break;
                     case '"':
                         instring = !instring;
-                        value.append(ch);
+                        if (interest) {
+                            value.append(ch);
+                        }
                         break;
                     case ',':
                         if (!instring && brackets == 0 && accolades == 0) {
                             // end of the property
                             break charloop;
                         } else {
-                            value.append(ch);
+                            if (interest) {
+                                value.append(ch);
+                            }
                         }
                         break;
                     default:
-                        value.append(ch);
+                        if (interest) {
+                            value.append(ch);
+                        }
                         break;
                 }
                 next = _source.read();
             }
 
-            boolean interest;
-            if (_propsToKeep == null) {
-                interest = true;
-            } else {
-                interest = false;
-                for (String p : _propsToKeep) {
-                    interest = interest || p.equals(name);
-                }
-            }         
-            
             if (interest) {
                 String val = value.toString().trim();
                 if (val.charAt(0) == '"') {
                     val = val.substring(1, val.length() - 1);
                 }
                 props.put(name, val);
-            } 
+            }
         }
     }
 
