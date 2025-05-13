@@ -178,25 +178,20 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
 
         Vector dir = Vector.subtract(other, vertex);
 
-        ////System.err.println("  Shifting " + vertex + other + mid + side);
         switch (side) {
             case LEFT: {
                 TVertex next = findFirst(vertex, down, mid, Side.LEFT, Math.PI + DoubleUtil.EPS);
-                ////System.err.println("    n? " + next);
                 while (next != null && Vector.crossProduct(dir, Vector.subtract(next, vertex)) <= 0) {
                     vertex = next;
                     next = findFirst(vertex, down, mid, Side.LEFT, Math.PI + DoubleUtil.EPS);
-                    ////System.err.println("    n? " + next);
                     dir = Vector.subtract(other, vertex);
                 }
 
                 if (!xalign) {
                     TVertex prev = findLast(vertex, down, mid, Side.LEFT, Math.PI + DoubleUtil.EPS);
-                    // //System.err.println("    p? " + prev);
                     while (prev != null && Vector.crossProduct(dir, Vector.subtract(prev, vertex)) < 0) {
                         vertex = prev;
                         prev = findLast(vertex, down, mid, Side.LEFT, Math.PI + DoubleUtil.EPS);
-                        //System.err.println("    p? " + prev);
                         dir = Vector.subtract(other, vertex);
                     }
                 }
@@ -205,23 +200,18 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
             case RIGHT:
                 if (!xalign) {
                     TVertex next = findFirst(vertex, down, mid, Side.RIGHT, Math.PI + DoubleUtil.EPS);
-                    // //System.err.println("    n? " + next);
                     while (next != null && Vector.crossProduct(dir, Vector.subtract(next, vertex)) >= 0) {
                         vertex = next;
                         next = findFirst(vertex, down, mid, Side.RIGHT, Math.PI + DoubleUtil.EPS);
-                        //  //System.err.println("    n? " + next);
                         dir = Vector.subtract(other, vertex);
                     }
                 }
 
                 TVertex prev = findLast(vertex, down, mid, Side.RIGHT, Math.PI + DoubleUtil.EPS);
-                //  //System.err.println("    p? " + prev);
                 while (prev != null && Vector.crossProduct(dir, Vector.subtract(prev, vertex)) > 0) {
                     vertex = prev;
                     prev = findLast(vertex, down, mid, Side.RIGHT, Math.PI + DoubleUtil.EPS);
-                    //   //System.err.println("    p? " + prev);
                     dir = Vector.subtract(other, vertex);
-
                 }
                 break;
         }
@@ -234,18 +224,13 @@ public class DelaunayTriangulation<TGraph extends SimpleGraph<TGeom, TVertex, TE
         Vector dir = Vector.subtract(other, vertex);
         dir.normalize();
 
-//        //System.err.println("  candidate? " + vertex + " " + other);
         TVertex first = findFirst(vertex, dir, mid, side, Math.PI - DoubleUtil.EPS);
-//        //System.err.println("    first " + first);
         if (first == null) {
             return null;
         }
         TVertex second = findSecond(vertex, dir, mid, side, Math.PI - DoubleUtil.EPS);
-        //System.err.println("    second " + second);
         Circle c = Circle.byThreePoints(vertex, other, first);
-        //System.err.println("    c " + c);
         while (second != null && c != null && c.contains(second)) {
-            //System.err.println("  removing " + vertex + "-" + first);
             _input.removeEdge(vertex.getEdgeTo(first));
             first = second;
             second = findSecond(vertex, dir, mid, side, Math.PI - DoubleUtil.EPS);
