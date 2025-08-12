@@ -65,4 +65,8 @@ public class QuadNode<T extends GeometryConvertable> {
     public List<T> getElements() {
         return _elts;
     }
+    
+    public int getDepth() {
+        return _depth;
+    }
 }

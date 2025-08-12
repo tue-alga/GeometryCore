@@ -63,7 +63,7 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
             n = n._parent;
         }
         // sift down
-        while (n._depth <= _maxDepth) {
+        while (n._depth < _maxDepth) {
 
             Vector c = n._rect.center();
             if (b.getRight() <= c.getX()) {
@@ -363,5 +363,32 @@ public class QuadTree<T extends GeometryConvertable> extends GeometryStore<T> {
         findStabbedRecursive(n._RB, point, precision, action);
         findStabbedRecursive(n._LT, point, precision, action);
         findStabbedRecursive(n._RT, point, precision, action);
+    }
+
+    /**
+     * Traverses all nodes in this quad tree, invoking the handler on each node.
+     * This method is meant for inspecting the tree only, not for making
+     * modifications. The nodes are visited a pre-order traversal.
+     *
+     * @param handler
+     */
+    public void traverse(QuadNodeHandler handler) {
+        traverse(_root, handler);
+    }
+
+    private void traverse(QuadNode<T> node, QuadNodeHandler handler) {
+        if (node != null) {
+            handler.handle(node);
+
+            traverse(node._LB, handler);
+            traverse(node._RB, handler);
+            traverse(node._RT, handler);
+            traverse(node._LT, handler);
+        }
+    }
+
+    public interface QuadNodeHandler<T extends GeometryConvertable> {
+
+        void handle(QuadNode<T> quadnode);
     }
 }

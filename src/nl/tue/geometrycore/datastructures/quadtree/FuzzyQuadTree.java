@@ -50,7 +50,7 @@ public class FuzzyQuadTree<T extends GeometryConvertable> extends QuadTree<T> {
             n = n._parent;
         }
         // sift down
-        while (n._depth <= _maxDepth) {
+        while (n._depth < _maxDepth) {
 
             Vector c = n._rect.center();
             double fx = n._rect.width() / 2.0 * _fuzziness;

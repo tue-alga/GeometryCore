@@ -24,7 +24,7 @@ import nl.tue.geometrycore.geometry.linear.Rectangle;
  */
 public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
 
-    private final QuadNode _root;
+    private final PointQuadNode<T> _root;
     private final int _maxDepth;
 
     /**
@@ -34,14 +34,37 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
      * @param maxDepth maximum depth of the tree
      */
     public PointQuadTree(Rectangle box, int maxDepth) {
-        _root = new QuadNode();
+        _root = new PointQuadNode();
         _root._rect = box.clone();
         _maxDepth = maxDepth;
     }
-    
+
+    /**
+     * Traverses all nodes in this quad tree, invoking the handler on each node.
+     * This method is meant for inspecting the tree only, not for making
+     * modifications. The nodes are visited a pre-order traversal.
+     *
+     * @param handler
+     */
+    public void traverse(QuadNodeHandler handler) {
+        traverse(_root, 0, handler);
+    }
+
+    private void traverse(PointQuadNode<T> node, int depth, QuadNodeHandler handler) {
+        if (node != null) {
+            handler.handle(node, depth);
+
+            depth++;
+            traverse(node._LB, depth, handler);
+            traverse(node._RB, depth, handler);
+            traverse(node._RT, depth, handler);
+            traverse(node._LT, depth, handler);
+        }
+    }
+
     @Override
     public void insert(T elt) {
-        QuadNode n = _root;
+        PointQuadNode<T> n = _root;
         int d = 0;
         while (n._elts == null) {
             // have not reached a leaf 
@@ -52,8 +75,9 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
                 if (elt.getY() <= c.getY()) {
                     // bottom     
                     if (n._LB == null) {
-                        n._LB = new QuadNode();
+                        n._LB = new PointQuadNode();
                         n._LB._rect = Rectangle.byCorners(n._rect.leftBottom(), c);
+                        n._LB._parent = n;
                         if (d >= _maxDepth) {
                             n._LB._elts = new ArrayList();
                         }
@@ -62,8 +86,9 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
                 } else {
                     // top                    
                     if (n._LT == null) {
-                        n._LT = new QuadNode();
+                        n._LT = new PointQuadNode();
                         n._LT._rect = Rectangle.byCorners(n._rect.leftTop(), c);
+                        n._LT._parent = n;
                         if (d >= _maxDepth) {
                             n._LT._elts = new ArrayList();
                         }
@@ -75,8 +100,9 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
                 if (elt.getY() <= c.getY()) {
                     // bottom     
                     if (n._RB == null) {
-                        n._RB = new QuadNode();
+                        n._RB = new PointQuadNode();
                         n._RB._rect = Rectangle.byCorners(n._rect.rightBottom(), c);
+                        n._RB._parent = n;
                         if (d >= _maxDepth) {
                             n._RB._elts = new ArrayList();
                         }
@@ -85,8 +111,9 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
                 } else {
                     // top                    
                     if (n._RT == null) {
-                        n._RT = new QuadNode();
+                        n._RT = new PointQuadNode();
                         n._RT._rect = Rectangle.byCorners(n._rect.rightTop(), c);
+                        n._RT._parent = n;
                         if (d >= _maxDepth) {
                             n._RT._elts = new ArrayList();
                         }
@@ -100,7 +127,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
 
     @Override
     public boolean remove(T elt) {
-        QuadNode n = _root;
+        PointQuadNode<T> n = _root;
         int d = 0;
         while (n._elts == null) {
             // have not reached a leaf 
@@ -138,7 +165,26 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
                 }
             }
         }
-        return n._elts.remove(elt);
+        if (n._elts.remove(elt)) {
+
+            do {
+                PointQuadNode<T> p = n._parent;
+                if (p._LB == n) {
+                    p._LB = null;
+                } else if (p._LT == n) {
+                    p._LT = null;
+                } else if (p._RB == n) {
+                    p._RB = null;
+                } else if (p._RT == n) {
+                    p._RT = null;
+                }
+                n = p;
+            } while (n != _root && n._LT == null && n._LB == null && n._RB == null && n._RT == null);
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -146,7 +192,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         findContainedRecursive(_root, rect, precision, action);
     }
 
-    private void findContainedRecursive(QuadNode n, Rectangle rect, double precision, Consumer<? super T> action) {
+    private void findContainedRecursive(PointQuadNode<T> n, Rectangle rect, double precision, Consumer<? super T> action) {
         if (n == null || !n._rect.overlaps(rect, precision)) {
             // no node
             // or disjoint
@@ -178,7 +224,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         findContainedRecursive(_root, convex, precision, action);
     }
 
-    private void findContainedRecursive(QuadNode n, Polygon convex, double precision, Consumer<? super T> action) {
+    private void findContainedRecursive(PointQuadNode<T> n, Polygon convex, double precision, Consumer<? super T> action) {
         if (n == null || !convex.convexOverlaps(n._rect, precision)) {
             // no node
             // or disjoint
@@ -221,7 +267,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         return findRecursive(_root, point, precision);
     }
 
-    private T findRecursive(QuadNode n, Vector point, double precision) {
+    private T findRecursive(PointQuadNode<T> n, Vector point, double precision) {
         if (n == null || !n._rect.contains(point, precision)) {
             return null;
         } else if (n._elts == null) {
@@ -247,14 +293,14 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
             }
             return null;
         }
-    }
+    }   
 
     @Override
     public void findStabbed(Vector point, double precision, Consumer<? super T> action) {
         findStabbedRecursive(_root, point, precision, action);
     }
 
-    private void findStabbedRecursive(QuadNode n, Vector point, double precision, Consumer<? super T> action) {
+    private void findStabbedRecursive(PointQuadNode<T> n, Vector point, double precision, Consumer<? super T> action) {
         if (n == null || !n._rect.contains(point, precision)) {
             // no node
             // or disjoint
@@ -287,11 +333,24 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         findContained(convex, precision, action);
     }
 
-    private class QuadNode {
+    public static class PointQuadNode<T extends Vector> {
 
+        PointQuadNode<T> _parent;
         Rectangle _rect;
-        QuadNode _LT, _LB, _RT, _RB;
+        PointQuadNode<T> _LT, _LB, _RT, _RB;
         ArrayList<T> _elts;
 
+        public Rectangle getRect() {
+            return _rect;
+        }
+
+        public ArrayList<T> getElts() {
+            return _elts;
+        }
+    }
+
+    public interface QuadNodeHandler<T extends Vector> {
+
+        void handle(PointQuadNode<T> quadnode, int depth);
     }
 }
