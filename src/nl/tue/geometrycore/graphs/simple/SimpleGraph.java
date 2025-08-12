@@ -24,6 +24,7 @@ import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.mix.GeometryCycle;
 import nl.tue.geometrycore.geometry.mix.GeometryString;
 import nl.tue.geometrycore.util.DoubleUtil;
+import nl.tue.geometrycore.util.ListUtil;
 import nl.tue.geometrycore.util.Pair;
 
 /**
@@ -315,12 +316,10 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
             n--;
         }
 
-        TVertex last = _vertices.remove(_vertices.size() - 1);
-        if (last != vertex) {
-            _vertices.set(vertex._graphIndex, last);
+        TVertex last = ListUtil.swapRemove(vertex._graphIndex, _vertices);
+        if (last != null) {
             last._graphIndex = vertex._graphIndex;
         }
-
         vertex._graphIndex = -1;
     }
 
@@ -392,12 +391,10 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
         edge._start._edges.remove(edge);
         edge._end._edges.remove(edge);
 
-        TEdge last = _edges.remove(_edges.size() - 1);
-        if (last != edge) {
-            _edges.set(edge._graphIndex, last);
+        TEdge last = ListUtil.swapRemove(edge._graphIndex, _edges);
+        if (last != null) {
             last._graphIndex = edge._graphIndex;
         }
-
         edge._graphIndex = -1;
     }
 

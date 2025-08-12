@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.OrientedGeometry;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.graphs.simple.SimpleGraph;
+import nl.tue.geometrycore.util.ListUtil;
 
 /**
  *
@@ -511,13 +512,10 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
     }
 
     private void removeVertexFromList(TVertex vertex) {
-        TVertex last = _vertices.remove(_vertices.size() - 1);
-
-        if (last != vertex) {
-            _vertices.set(vertex._graphIndex, last);
+        TVertex last = ListUtil.swapRemove(vertex._graphIndex, _vertices);
+        if (last != null) {
             last._graphIndex = vertex._graphIndex;
         }
-
         vertex._graphIndex = -1;
     }
 
@@ -526,24 +524,20 @@ public abstract class DCELGraph<TGeom extends OrientedGeometry<TGeom>, TVertex e
             dart = dart._twin;
         }
 
-        TDart last = _darts.remove(_darts.size() - 1);
-        if (last != dart) {
-            _darts.set(dart._graphIndex, last);
+        TDart last = ListUtil.swapRemove(dart._graphIndex, _darts);
+        if (last != null) {
             last._graphIndex = dart._graphIndex;
         }
-
         dart._graphIndex = -1;
     }
 
     private void removeFaceFromList(TFace face) {
         assert face.isOuterFace() : "Cannot remove outerface...";
 
-        TFace last = _faces.remove(_faces.size() - 1);
-        if (last != face) {
-            _faces.set(face._graphIndex, last);
+        TFace last = ListUtil.swapRemove(face._graphIndex, _faces);
+        if (last != null) {
             last._graphIndex = face._graphIndex;
         }
-
         face._graphIndex = -1;
     }
 
