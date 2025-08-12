@@ -9,7 +9,6 @@ package nl.tue.geometrycore.algorithms.dsp;
 import nl.tue.geometrycore.algorithms.EdgeWeightInterface;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import nl.tue.geometrycore.datastructures.priorityqueue.BasicIndexable;
 import nl.tue.geometrycore.datastructures.priorityqueue.IndexedPriorityQueue;
@@ -173,13 +172,8 @@ public class DijkstrasShortestPath<TGraph extends SimpleGraph<TGeom, TVertex, TE
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">
     private void runDSP(TVertex from, TVertex to, TEdge ignore, double lengthcap) {
 
-        IndexedPriorityQueue<IndexedVertex> queue = new IndexedPriorityQueue(_graph.getVertices().size() / 2, new Comparator<IndexedVertex>() {
-
-            @Override
-            public int compare(IndexedVertex o1, IndexedVertex o2) {
-                return Double.compare(o1._distance, o2._distance);
-            }
-        });
+        IndexedPriorityQueue<IndexedVertex> queue = new IndexedPriorityQueue<>(_graph.getVertices().size() / 2,
+                (IndexedVertex o1, IndexedVertex o2) -> Double.compare(o1._distance, o2._distance));
 
         IndexedVertex first = _vertices[from.getGraphIndex()];
         first._distance = 0;
@@ -188,7 +182,7 @@ public class DijkstrasShortestPath<TGraph extends SimpleGraph<TGeom, TVertex, TE
         while (!queue.isEmpty()) {
             IndexedVertex iv = queue.poll();
             TVertex v = _graph.getVertices().get(iv._graphIndex);
-                       
+
             if (v == to || iv._distance > lengthcap) {
                 break;
             }
