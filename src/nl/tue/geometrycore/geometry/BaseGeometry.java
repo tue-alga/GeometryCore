@@ -71,6 +71,13 @@ public abstract class BaseGeometry<TActual extends BaseGeometry> implements Geom
     public abstract void intersect(BaseGeometry other, double prec, List<BaseGeometry> intersections);
 
     /**
+     * Computes the total boundary length of the given geometry.
+     *
+     * @return perimeter length
+     */
+    public abstract double perimeter();
+
+    /**
      * Computes whether the provided point lies on the boundary of this
      * geometry, with a precision of DoubleUtil.EPS.
      *
@@ -136,6 +143,16 @@ public abstract class BaseGeometry<TActual extends BaseGeometry> implements Geom
      */
     public void translate(Vector delta) {
         translate(delta.getX(), delta.getY());
+    }
+
+    /**
+     * Translates the geometry with the inverse of the given vector.
+     *
+     * @param delta the inverse coordinates of this Vector are used as
+     * displacement in X-coordinate and Y-coordinate
+     */
+    public void untranslate(Vector delta) {
+        translate(-delta.getX(), -delta.getY());
     }
 
     /**

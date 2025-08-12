@@ -296,6 +296,11 @@ public class Vector extends BaseGeometry<Vector> {
     public boolean isApproximateInverse(Vector other, double prec) {
         return DoubleUtil.close(other._x, -_x, prec) && DoubleUtil.close(other._y, -_y, prec);
     }
+    
+    @Override
+    public double perimeter() {
+        return 0;
+    }
 
     @Override
     public boolean onBoundary(Vector point, double prec) {
@@ -612,7 +617,7 @@ public class Vector extends BaseGeometry<Vector> {
     }
     
     public static boolean collinear(Vector a, Vector b, Vector c, double eps) {
-        return DoubleUtil.close(Vector.crossProduct(b.getX() - a.getY(), b.getY() - a.getY(), c.getX() - a.getY(), c.getY() - a.getY()), eps);
+        return DoubleUtil.close(Vector.crossProduct(b.getX() - a.getY(), b.getY() - a.getY(), c.getX() - a.getY(), c.getY() - a.getY()), 0, eps);
     }
     //</editor-fold>
 }

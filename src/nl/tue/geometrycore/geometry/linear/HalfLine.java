@@ -154,6 +154,11 @@ public class HalfLine extends BaseGeometry<HalfLine> implements InfiniteGeometry
     }
 
     @Override
+    public double perimeter() {
+        return Double.POSITIVE_INFINITY;
+    }
+    
+    @Override
     public boolean onBoundary(Vector point, double prec) {
         // TODO: this kind of implementation for all geometries?
         return closestPoint(point).isApproximately(point, prec);

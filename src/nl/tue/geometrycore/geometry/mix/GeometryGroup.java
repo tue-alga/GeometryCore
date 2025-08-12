@@ -63,6 +63,15 @@ public class GeometryGroup<TPart extends BaseGeometry<TPart>> extends BaseGeomet
 
     //<editor-fold defaultstate="collapsed" desc="QUERIES">
     @Override
+    public double perimeter() {
+        double per = 0;
+        for (TPart part : _parts) {
+            per += part.perimeter();
+        }
+        return per;
+    }
+    
+    @Override
     public boolean onBoundary(Vector point, double prec) {
         for (TPart part : _parts) {
             if (part.onBoundary(point, prec)) {

@@ -33,13 +33,6 @@ public abstract class OrientedGeometry<TActual extends OrientedGeometry> extends
     public abstract double areaSigned();
 
     /**
-     * Computes the perimeter length of this geometry.
-     *
-     * @return Length of the perimeter
-     */
-    public abstract double perimeter();
-
-    /**
      * Computes the position along this geometry's boundary, using
      * length-parametrization. A fraction of 0 maps to the start point, and a
      * fraction of 1 to the end point. Behavior for provided fractions outside

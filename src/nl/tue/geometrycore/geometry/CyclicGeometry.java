@@ -20,13 +20,6 @@ public abstract class CyclicGeometry<TActual extends CyclicGeometry> extends Bas
 
     //<editor-fold defaultstate="collapsed" desc="QUERIES">
     /**
-     * Computes the total boundary length of the given geometry.
-     *
-     * @return perimeter length
-     */
-    public abstract double perimeter();
-
-    /**
      * Computes the total area enclosed by the geometry. Should always be
      * nonnegative.
      *

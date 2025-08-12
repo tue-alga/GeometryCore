@@ -722,10 +722,7 @@ public class Polygon extends CyclicGeometry<Polygon> {
         if (_vertices.isEmpty()) {
             return index;
         }
-        while (index < 0) {
-            index += _vertices.size();
-        }
-        return index % _vertices.size();
+        return Math.floorMod(index, _vertices.size());
     }
 
     /**

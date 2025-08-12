@@ -229,6 +229,11 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
     }
 
     @Override
+    public double perimeter() {
+        return Double.POSITIVE_INFINITY;
+    }
+
+    @Override
     public boolean onBoundary(Vector point, double prec) {
         if (point.isApproximately(_through, prec)) {
             return true;
@@ -263,8 +268,7 @@ public class Line extends BaseGeometry<Line> implements InfiniteGeometry<LineSeg
                 break;
         }
     }
-    
-    
+
     @Override
     public Vector arbitraryPoint() {
         return _through;

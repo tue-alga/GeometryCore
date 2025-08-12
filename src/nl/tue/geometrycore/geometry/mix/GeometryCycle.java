@@ -77,11 +77,7 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
      * @return the edge at index
      */
     public TEdge edge(int index) {
-        final int n = _edges.size();
-        while (index < 0) {
-            index += n;
-        }
-        return _edges.get(index % n);
+        return _edges.get(index(index));
     }
 
     /**
@@ -100,11 +96,22 @@ public class GeometryCycle<TEdge extends OrientedGeometry<TEdge>> extends Cyclic
      * @return the vertex at index
      */
     public Vector vertex(int index) {
-        final int n = _edges.size();
-        while (index < 0) {
-            index += n;
+        return _edges.get(index(index)).getStart();
+    }
+    
+    
+    /**
+     * Normalizes the index to the range [0,n) where n is the number of edges
+     * of the cycle.
+     *
+     * @param index
+     * @return index mod n
+     */
+    public int index(int index) {
+        if (_edges.isEmpty()) {
+            return index;
         }
-        return _edges.get(index % n).getStart();
+        return Math.floorMod(index, _edges.size());
     }
 
     /**

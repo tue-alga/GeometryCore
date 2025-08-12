@@ -249,6 +249,11 @@ public class ParabolicHalfLine extends BaseGeometry<ParabolicHalfLine> implement
     }
 
     @Override
+    public double perimeter() {
+        return Double.POSITIVE_INFINITY;
+    }
+
+    @Override
     public boolean onBoundary(Vector point, double prec) {
         if (_focus.isApproximateInverse(point, prec)) {
             return false;

@@ -296,7 +296,7 @@ public class GeoJSONReader extends BaseReader {
             }
             case "GeometryCollection":
                 skipToQuotedString("geometries");
-                // TODO
+                System.err.println("Unsupported geometry type: " + type);
                 break;
             default:
                 System.err.println("Unsupported geometry type: " + type);
