@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 public class IPECommands {
 
     private final String _ipeDir;
+    private boolean _redirect;
 
     /**
      * Creates an IPECommands using the given directory of IPE.
@@ -39,7 +40,6 @@ public class IPECommands {
             return null;
         }
 
-        
         if (// windows
                 !new File(dir, "ipetoipe.exe").exists()
                 // linux/mac?
@@ -53,6 +53,29 @@ public class IPECommands {
 
     private IPECommands(String ipeDir) {
         _ipeDir = ipeDir;
+        _redirect = false;
+    }
+
+    /**
+     * Indicates whether the process's output streams are redirected to Java's
+     * standard output streams. Default value is false, which discards the
+     * output.
+     *
+     * @return Whether output streams are redirected.
+     */
+    public boolean isRedirect() {
+        return _redirect;
+    }
+
+    /**
+     * Configures whether the process's output streams are to be redirected to
+     * Java's standard output streams.Default value is false, which discards the
+     * output.
+     *
+     * @param redirect Whether output streams are to be redirected.
+     */
+    public void setRedirect(boolean redirect) {
+        _redirect = redirect;
     }
 
     /**
@@ -77,8 +100,23 @@ public class IPECommands {
      */
     public void convertIPEtoPDF(File ipe, File pdf) {
         try {
-            Runtime.getRuntime().exec(_ipeDir + "ipetoipe -pdf \"" + ipe.getAbsolutePath() + "\" \"" + pdf.getCanonicalPath() + "\"");
-        } catch (IOException ex) {
+            String[] cmd = {
+                _ipeDir + "ipetoipe",
+                "-pdf",
+                ipe.getAbsolutePath(),
+                pdf.getCanonicalPath()
+            };
+            ProcessBuilder bp = new ProcessBuilder(cmd);
+            if (_redirect) {
+                bp.redirectError(ProcessBuilder.Redirect.INHERIT);
+                bp.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            } else {
+                bp.redirectError(ProcessBuilder.Redirect.DISCARD);
+                bp.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            }
+            Process p = bp.start();
+            p.waitFor();
+        } catch (IOException | InterruptedException ex) {
             Logger.getLogger(IPECommands.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -101,7 +139,6 @@ public class IPECommands {
         }
     }
 
-    
     /**
      * Converts the given IPE file to a PNG file.
      *
@@ -113,8 +150,38 @@ public class IPECommands {
      */
     public void convertIPEtoPNG(File ipe, File png, int resolution, boolean crop) {
         try {
-            Runtime.getRuntime().exec(_ipeDir + "iperender -png -resolution " + resolution + (crop ? " " : " -nocrop") + " -transparent \"" + ipe.getAbsolutePath() + "\" \"" + png.getCanonicalPath() + "\"");
-        } catch (IOException ex) {
+            System.out.println("? " + png);
+            String[] cmd = crop
+                    ? new String[]{
+                        _ipeDir + "iperender",
+                        "-png",
+                        "-resolution",
+                        "" + resolution,
+                        "-nocrop",
+                        "-transparent",
+                        ipe.getAbsolutePath(),
+                        png.getCanonicalPath()
+                    }
+                    : new String[]{
+                        _ipeDir + "iperender",
+                        "-png",
+                        "-resolution",
+                        "" + resolution,
+                        "-transparent",
+                        ipe.getAbsolutePath(),
+                        png.getCanonicalPath()
+                    };
+            ProcessBuilder bp = new ProcessBuilder(cmd);
+            if (_redirect) {
+                bp.redirectError(ProcessBuilder.Redirect.INHERIT);
+                bp.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            } else {
+                bp.redirectError(ProcessBuilder.Redirect.DISCARD);
+                bp.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            }
+            Process p = bp.start();
+            p.waitFor();
+        } catch (IOException | InterruptedException ex) {
             Logger.getLogger(IPECommands.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
