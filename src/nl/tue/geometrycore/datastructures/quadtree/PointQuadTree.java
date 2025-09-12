@@ -34,8 +34,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
      * @param maxDepth maximum depth of the tree
      */
     public PointQuadTree(Rectangle box, int maxDepth) {
-        _root = new PointQuadNode();
-        _root._rect = box.clone();
+        _root = new PointQuadNode(null, box.clone());
         _maxDepth = maxDepth;
     }
 
@@ -46,51 +45,45 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
      *
      * @param handler
      */
-    public void traverse(QuadNodeHandler handler) {
-        traverse(_root, 0, handler);
+    public void traverse(Consumer<PointQuadNode<T>> handler) {
+        traverse(_root, handler);
     }
 
-    private void traverse(PointQuadNode<T> node, int depth, QuadNodeHandler handler) {
+    private void traverse(PointQuadNode<T> node, Consumer<PointQuadNode<T>> handler) {
         if (node != null) {
-            handler.handle(node, depth);
-
-            depth++;
-            traverse(node._LB, depth, handler);
-            traverse(node._RB, depth, handler);
-            traverse(node._RT, depth, handler);
-            traverse(node._LT, depth, handler);
+            handler.accept(node);
+            traverse(node._LB, handler);
+            traverse(node._RB, handler);
+            traverse(node._RT, handler);
+            traverse(node._LT, handler);
         }
     }
 
-    @Override
-    public void insert(T elt) {
+    private PointQuadNode<T> find(T elt, boolean extend) {
         PointQuadNode<T> n = _root;
-        int d = 0;
         while (n._elts == null) {
             // have not reached a leaf 
             Vector c = n._rect.center();
-            d++;
+
             if (elt.getX() <= c.getX()) {
                 // left
                 if (elt.getY() <= c.getY()) {
                     // bottom     
                     if (n._LB == null) {
-                        n._LB = new PointQuadNode();
-                        n._LB._rect = Rectangle.byCorners(n._rect.leftBottom(), c);
-                        n._LB._parent = n;
-                        if (d >= _maxDepth) {
-                            n._LB._elts = new ArrayList();
+                        if (extend) {
+                            n._LB = new PointQuadNode(n, Rectangle.byCorners(n._rect.leftBottom(), c));
+                        } else {
+                            return null;
                         }
                     }
                     n = n._LB;
                 } else {
                     // top                    
                     if (n._LT == null) {
-                        n._LT = new PointQuadNode();
-                        n._LT._rect = Rectangle.byCorners(n._rect.leftTop(), c);
-                        n._LT._parent = n;
-                        if (d >= _maxDepth) {
-                            n._LT._elts = new ArrayList();
+                        if (extend) {
+                            n._LT = new PointQuadNode(n, Rectangle.byCorners(n._rect.leftTop(), c));
+                        } else {
+                            return null;
                         }
                     }
                     n = n._LT;
@@ -100,72 +93,39 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
                 if (elt.getY() <= c.getY()) {
                     // bottom     
                     if (n._RB == null) {
-                        n._RB = new PointQuadNode();
-                        n._RB._rect = Rectangle.byCorners(n._rect.rightBottom(), c);
-                        n._RB._parent = n;
-                        if (d >= _maxDepth) {
-                            n._RB._elts = new ArrayList();
+                        if (extend) {
+                            n._RB = new PointQuadNode(n, Rectangle.byCorners(n._rect.rightBottom(), c));
+                        } else {
+                            return null;
                         }
                     }
                     n = n._RB;
                 } else {
                     // top                    
                     if (n._RT == null) {
-                        n._RT = new PointQuadNode();
-                        n._RT._rect = Rectangle.byCorners(n._rect.rightTop(), c);
-                        n._RT._parent = n;
-                        if (d >= _maxDepth) {
-                            n._RT._elts = new ArrayList();
+                        if (extend) {
+                            n._RT = new PointQuadNode(n, Rectangle.byCorners(n._rect.rightTop(), c));
+                        } else {
+                            return null;
                         }
                     }
                     n = n._RT;
                 }
             }
         }
+        return n;
+    }
+
+    @Override
+    public void insert(T elt) {
+        PointQuadNode<T> n = find(elt, true);
         n._elts.add(elt);
     }
 
     @Override
     public boolean remove(T elt) {
-        PointQuadNode<T> n = _root;
-        int d = 0;
-        while (n._elts == null) {
-            // have not reached a leaf 
-            Vector c = n._rect.center();
-            d++;
-            if (elt.getX() <= c.getX()) {
-                // left
-                if (elt.getY() <= c.getY()) {
-                    // bottom     
-                    if (n._LB == null) {
-                        return false;
-                    }
-                    n = n._LB;
-                } else {
-                    // top                    
-                    if (n._LT == null) {
-                        return false;
-                    }
-                    n = n._LT;
-                }
-            } else {
-                // right
-                if (elt.getY() <= c.getY()) {
-                    // bottom     
-                    if (n._RB == null) {
-                        return false;
-                    }
-                    n = n._RB;
-                } else {
-                    // top                    
-                    if (n._RT == null) {
-                        return false;
-                    }
-                    n = n._RT;
-                }
-            }
-        }
-        if (n._elts.remove(elt)) {
+        PointQuadNode<T> n = find(elt, false);
+        if (n != null && n._elts.remove(elt)) {
 
             do {
                 PointQuadNode<T> p = n._parent;
@@ -293,7 +253,7 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
             }
             return null;
         }
-    }   
+    }
 
     @Override
     public void findStabbed(Vector point, double precision, Consumer<? super T> action) {
@@ -333,12 +293,24 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         findContained(convex, precision, action);
     }
 
-    public static class PointQuadNode<T extends Vector> {
+    public class PointQuadNode<T extends Vector> {
 
-        PointQuadNode<T> _parent;
-        Rectangle _rect;
+        final int _depth;
+        final PointQuadNode<T> _parent;
+        final Rectangle _rect;
+        final ArrayList<T> _elts;
         PointQuadNode<T> _LT, _LB, _RT, _RB;
-        ArrayList<T> _elts;
+
+        PointQuadNode(PointQuadNode<T> parent, Rectangle rect) {
+            _depth = parent == null ? 0 : parent._depth + 1;
+            _parent = parent;
+            _rect = rect;
+            _elts = _depth == _maxDepth ? new ArrayList() : null;
+        }
+
+        public int getDepth() {
+            return _depth;
+        }
 
         public Rectangle getRect() {
             return _rect;
@@ -347,10 +319,5 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
         public ArrayList<T> getElts() {
             return _elts;
         }
-    }
-
-    public interface QuadNodeHandler<T extends Vector> {
-
-        void handle(PointQuadNode<T> quadnode, int depth);
     }
 }
