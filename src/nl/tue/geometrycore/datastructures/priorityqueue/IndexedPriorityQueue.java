@@ -233,9 +233,8 @@ public class IndexedPriorityQueue<T extends Indexable> {
      * Removes the item at the provided index
      *
      * @param index index of the item to be removed
-     * @return the removed item
      */
-    private T removeAt(int index) {
+    private void removeAt(int index) {
         assert index >= 0 && index < _size;
 
         ((T) _queue[index]).setIndex(-1);
@@ -249,13 +248,9 @@ public class IndexedPriorityQueue<T extends Indexable> {
             _queue[s] = null;
             siftDown(index, moved);
             if (_queue[index] == moved) {
-                siftUp(index, moved);
-                if (_queue[index] != moved) {
-                    return moved;
-                }
+                siftUp(index, moved);                
             }
         }
-        return null;
     }
     //</editor-fold>
 

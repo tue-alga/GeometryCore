@@ -39,7 +39,7 @@ import nl.tue.geometrycore.io.BaseWriter;
 import nl.tue.geometrycore.util.ClipboardUtil;
 
 /**
- * Writer for the IPE xml format.
+ * Writer for the SVG format.
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
