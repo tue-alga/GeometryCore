@@ -96,6 +96,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
     private Map<String, Double> _namedSymbolsizes;
     private Map<String, Double> _namedTransparencies;
     private Map<String, Dashing> _namedDashing;
+    private Map<String, String> _namedSymbols;
     // View conttrol
     private final List<AffineTransform> _transformstack;
     private AffineTransform _currentTransform;
@@ -223,6 +224,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
         _namedSymbolsizes = new HashMap();
         _namedTransparencies = new HashMap();
         _namedDashing = new HashMap();
+        _namedSymbols = new HashMap();
     }
 
     /**
@@ -280,6 +282,17 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
      */
     public void setNamedDashing(Map<String, Dashing> namedDashing) {
         _namedDashing = namedDashing;
+    }
+
+    /**
+     * Configures symbols for use in IPE. Setting this to null will use the
+     * values from IPEDefaults. This method should only be used before calling
+     * .initialize() on the writer.
+     *
+     * @param namedSymbols map from names to xml-symbol specification
+     */
+    public void setNamedSymbols(Map<String, String> namedSymbols) {
+        _namedSymbols = namedSymbols;
     }
     //</editor-fold>
 
@@ -477,6 +490,9 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
         if (_namedSymbolsizes == null) {
             _namedSymbolsizes = IPEDefaults.getSymbolSizes();
         }
+        if (_namedSymbols == null) {
+            _namedSymbols = IPEDefaults.getSymbols();
+        }
         if (_namedStrokewidths == null) {
             _namedStrokewidths = IPEDefaults.getStrokeWidths();
         }
@@ -507,6 +523,10 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
             }
             for (Entry<String, Color> entry : _namedColors.entrySet()) {
                 write("<color name=\"" + entry.getKey() + "\" value=\"" + colorToString(entry.getValue()) + "\"/>\n");
+            }
+
+            for (Entry<String, String> entry : _namedSymbols.entrySet()) {
+                write(entry.getValue()+"\n");
             }
 
             for (Entry<String, Double> entry : _namedSymbolsizes.entrySet()) {
@@ -583,6 +603,38 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
     @Override
     public Appendable getRenderObject() {
         return _out;
+    }
+
+    /**
+     * Draws a named symbol on the given location. Requires the symbol name to
+     * be available in the named symbol map.
+     *
+     * @param location point of the symbol
+     * @param symbol the symbol type
+     */
+    public void drawSymbol(Vector location, double size, String symbol) {
+        try {
+            ensurePage();
+
+            String s = " size=\"" + size + "\"";
+            for (Entry<String, Double> entry : _namedSymbolsizes.entrySet()) {
+                if (DoubleUtil.close(entry.getValue(), size)) {
+                    s = " size=\"" + entry.getKey() + "\"";
+                    break;
+                }
+            }
+
+            write("<use name=\"" + symbol + "\" pos=\"" + location.getX() + " " + location.getY() + "\""
+                    + s
+                    + getStrokeAttribute()
+                    + getMatrixAttribute()
+                    + getLayerAttribute()
+                    + getOpacityAttribute()
+                    + "/>");
+
+        } catch (IOException ex) {
+            Logger.getLogger(IPEWriter.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override

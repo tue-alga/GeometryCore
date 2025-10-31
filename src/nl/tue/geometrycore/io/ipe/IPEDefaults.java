@@ -37,7 +37,7 @@ public class IPEDefaults {
      */
     public static Map<String, Color> getColors() {
         Map<String, Color> map = new HashMap();
-        
+
         // ipe default colors
         map.put("red", Color.red);
         map.put("green", Color.green);
@@ -67,26 +67,26 @@ public class IPEDefaults {
         map.put("lightyellow", new Color(255, 255, (int) (255 * 0.878)));
         map.put("black", Color.black);
         map.put("white", Color.white);
-        
+
         // extended Color brewer colors
         map.put("CB light blue", ExtendedColors.lightBlue);
         map.put("CB dark blue", ExtendedColors.darkBlue);
-        
+
         map.put("CB light red", ExtendedColors.lightRed);
         map.put("CB dark red", ExtendedColors.darkRed);
-        
+
         map.put("CB light green", ExtendedColors.lightGreen);
         map.put("CB dark green", ExtendedColors.darkGreen);
-        
+
         map.put("CB light orange", ExtendedColors.lightOrange);
         map.put("CB dark orange", ExtendedColors.darkOrange);
-        
+
         map.put("CB light purple", ExtendedColors.lightPurple);
         map.put("CB dark purple", ExtendedColors.darkPurple);
-        
+
         return map;
     }
-    
+
     /**
      * Default symbol sizes.
      *
@@ -100,7 +100,7 @@ public class IPEDefaults {
         map.put("large", 5.0);
         return map;
     }
-    
+
     /**
      * Default named strokewidths.
      *
@@ -114,7 +114,7 @@ public class IPEDefaults {
         map.put("ultrafat", 2.0);
         return map;
     }
-    
+
     /**
      * Default named transparencies. Note that all use of transparency must be
      * named in IPE.
@@ -138,7 +138,7 @@ public class IPEDefaults {
         map.put("100%", 1.0);
         return map;
     }
-    
+
     /**
      * Default named dash styles, as well as the dashing style that are
      * width-appropriate.
@@ -147,25 +147,42 @@ public class IPEDefaults {
      */
     public static Map<String, Dashing> getDashStyles() {
         Map<String, Dashing> map = new HashMap();
-        
+
         // standard ipe dashing
         map.put("normal", Dashing.SOLID);
         map.put("dashed", new Dashing(4));
         map.put("dotted", new Dashing(1, 3));
         map.put("dash dotted", new Dashing(4, 2, 1, 2));
         map.put("dash dot dotted", new Dashing(4, 2, 1, 2, 1, 2));
-        
+
         // extended dashing
         map.put("W dashed normal", new Dashing(1, 1.7));
         map.put("W dashed heavier", new Dashing(2, 3));
         map.put("W dashed fat", new Dashing(3, 5.1));
         map.put("W dashed ultrafat", new Dashing(5, 8.5));
-        
+
         map.put("W dot normal", new Dashing(0.01, 0.8));
         map.put("W dot heavier", new Dashing(0.01, 1.6));
         map.put("W dot fat", new Dashing(0.01, 2.4));
         map.put("W dot ultrafat", new Dashing(0.01, 4));
-        
+
+        return map;
+    }
+
+    /**
+     * Default named symbols with their commands.
+     *
+     * @return new map with the named symbols
+     */
+    public static Map<String, String> getSymbols() {
+        Map<String, String> map = new HashMap();
+
+        map.put("mark/disk(sx)", "<symbol name=\"mark/disk(sx)\" transformations=\"translations\">\n"
+                + "<path fill=\"sym-stroke\">\n"
+                + "0.6 0 0 0.6 0 0 e\n"
+                + "</path>\n"
+                + "</symbol>");
+
         return map;
     }
     //</editor-fold>

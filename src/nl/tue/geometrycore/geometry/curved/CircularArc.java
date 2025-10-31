@@ -60,7 +60,7 @@ public class CircularArc extends ParameterizedCurve<CircularArc> {
     public static CircularArc fromStartTangent(Vector start, Vector startTangent, Vector end) {
 
         Vector dir = Vector.subtract(end, start);
-        boolean ccw = 0 < Vector.crossProduct(startTangent, dir);;
+        boolean ccw = 0 < Vector.crossProduct(startTangent, dir);
 
         Line bisec = Line.bisector(start, end);
         Line perpen = Line.perpendicularAt(start, startTangent);
