@@ -34,8 +34,8 @@ public class PointQuadTree<T extends Vector> extends GeometryStore<T> {
      * @param maxDepth maximum depth of the tree
      */
     public PointQuadTree(Rectangle box, int maxDepth) {
-        _root = new PointQuadNode(null, box.clone());
         _maxDepth = maxDepth;
+        _root = new PointQuadNode(null, box.clone());
     }
 
     /**
