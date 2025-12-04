@@ -156,8 +156,7 @@ public class DoubleUtil {
      * @param b factor for linear term
      * @param c factor for constant term
      * @param threshold threshold value
-     * @return the smallest solution > threshold; NaN if no such solution
-     * exists
+     * @return the smallest solution > threshold; NaN if no such solution exists
      */
     public static double solveQuadraticEquationForSmallestPositive(double a, double b, double c, double threshold) {
         double[] sol = solveQuadraticEquation(a, b, c);
@@ -376,12 +375,14 @@ public class DoubleUtil {
     public static double max(double... vs) {
         double m = Double.NEGATIVE_INFINITY;
         for (double v : vs) {
-            m = Math.max(m, v);
+            if (v > m) {
+                m = v;
+            }
         }
         return m;
     }
-    
-     /**
+
+    /**
      * Convenience function to compute the minimum over multiple values. The
      * value will be positive infinity if vs is empty; if a value is NaN, then
      * the result will be NaN.
@@ -392,7 +393,9 @@ public class DoubleUtil {
     public static double min(double... vs) {
         double m = Double.POSITIVE_INFINITY;
         for (double v : vs) {
-            m = Math.min(m, v);
+            if (v < m) {
+                m = v;
+            }
         }
         return m;
     }
