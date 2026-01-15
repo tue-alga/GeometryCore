@@ -12,9 +12,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import nl.tue.geometrycore.geometry.Vector;
 import nl.tue.geometrycore.geometry.linear.PolyLine;
 import nl.tue.geometrycore.geometry.linear.Polygon;
@@ -36,6 +37,7 @@ public class GeoJSONReader extends BaseReader {
     //<editor-fold defaultstate="collapsed" desc="FIELDS">
     private final BufferedReader _source;
     private boolean _eof;
+    private boolean _trimQuotesFromProperties;
     private String[] _propsToKeep;
     //</editor-fold>
 
@@ -43,6 +45,7 @@ public class GeoJSONReader extends BaseReader {
     private GeoJSONReader(BufferedReader source) {
         _source = source;
         _eof = false;
+        _trimQuotesFromProperties = true;
         _propsToKeep = null;
     }
 
@@ -122,8 +125,21 @@ public class GeoJSONReader extends BaseReader {
     public void setPropertiesOfInterest(String... props) {
         _propsToKeep = props;
     }
-    //</editor-fold>
 
+    /**
+     * By default, property-values that start with a quote have their starting
+     * (and presumably ending) quote trimmed. Setting this to false maintains
+     * the quotes surrounding String properties, allowing for easier writing of
+     * the properties.
+     *
+     *
+     * @param trim Whether quotes are to be trimmed
+     */
+    public void setTrimQuotes(boolean trim) {
+        _trimQuotesFromProperties = trim;
+    }
+
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">
     private ReadItem readFeature() throws IOException {
         if (!skipToCharacter('{')) {
@@ -150,7 +166,7 @@ public class GeoJSONReader extends BaseReader {
     }
 
     private void readProperties(ReadItem ri) throws IOException {
-        Map<String, String> props = new HashMap();
+        Map<String, String> props = new LinkedHashMap();
         ri.setAuxiliary(props);
 
         boolean done = false;
@@ -246,7 +262,7 @@ public class GeoJSONReader extends BaseReader {
 
             if (interest) {
                 String val = value.toString().trim();
-                if (val.charAt(0) == '"') {
+                if (_trimQuotesFromProperties && val.charAt(0) == '"') {
                     val = val.substring(1, val.length() - 1);
                 }
                 props.put(name, val);
