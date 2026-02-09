@@ -140,6 +140,7 @@ public class GeoJSONReader extends BaseReader {
     }
 
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="PRIVATE">
     private ReadItem readFeature() throws IOException {
         if (!skipToCharacter('{')) {

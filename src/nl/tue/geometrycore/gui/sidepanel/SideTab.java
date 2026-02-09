@@ -79,7 +79,7 @@ public class SideTab {
 
     //<editor-fold defaultstate="collapsed" desc="TAB METHODS">
     public void invalidate() {
-        _panel.invalidate();
+        _panel.revalidate();
         _panel.repaint();
     }
 
