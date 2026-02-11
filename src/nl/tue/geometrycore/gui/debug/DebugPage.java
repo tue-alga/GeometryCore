@@ -3,64 +3,70 @@ package nl.tue.geometrycore.gui.debug;
 import nl.tue.geometrycore.geometryrendering.CachedRenderer;
 import java.util.ArrayList;
 import java.util.List;
+import nl.tue.geometrycore.io.LayeredWriter;
+import nl.tue.geometrycore.io.ViewsWriter;
+import nl.tue.geometrycore.io.ipe.IPEWriter;
 
 /**
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class DebugPage extends CachedRenderer {
+public class DebugPage extends CachedRenderer implements ViewsWriter, LayeredWriter {
 
-    private String name;
-    private List<DebugView> views = null;
+    private final DebugRenderer _renderer;
+    private final int _index;
+    private final String _name;
+    private final List<DebugView> _views = new ArrayList();
 
-    public DebugPage(String name) {
-        this.name = name;
+    DebugPage(DebugRenderer renderer, int index, String name) {
+        _renderer = renderer;
+        _index = index;
+        _name = name;
+    }
+
+    public DebugRenderer getRenderer() {
+        return _renderer;
+    }
+
+    public int getIndex() {
+        return _index;
     }
 
     public String getName() {
-        return name;
+        return _name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-    
     public List<DebugView> getViews() {
-        return views;
+        return _views;
     }
-    
+
     public boolean hasViews() {
-        return views != null;
+        return !_views.isEmpty();
     }
 
-    public DebugView addView(String... layers) {
-        if (views == null) {
-            views = new ArrayList();
+    public void notifyChange() {
+        _renderer.notifyPageChange(this);
+    }
+
+    @Override
+    public void newView(String... visible) {
+        DebugView v = new DebugView(_views.size(), visible);
+        _views.add(v);
+        _renderer.notifyNewView(this);
+    }
+
+    public void renderToIPE(IPEWriter write) {
+        write.newPage(collectLayersArray());
+        for (DebugView view : _views) {
+            write.newView(view.getVisible());
         }
-        DebugView v = new DebugView(layers);
-        views.add(v);
-        return v;
+        renderTo(write);
     }
 
-    public void removeView(DebugView v) {
-        views.remove(v);
+    void renderToIPE(IPEWriter write, DebugView view) {
+        write.newPage(collectLayersArray());
+        write.newView(view.getVisible());
+        renderViewTo(write, view.getVisible());
     }
 
-    public void clearViews() {
-        views = null;
-    }
-
-    public class DebugView {
-
-        private String[] layers;
-
-        public DebugView(String[] layers) {
-            this.layers = layers;
-        }
-
-        public String[] getLayers() {
-            return layers;
-        }
-
-    }
 }

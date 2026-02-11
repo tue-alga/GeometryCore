@@ -43,6 +43,8 @@ import nl.tue.geometrycore.geometryrendering.styling.Dashing;
 import nl.tue.geometrycore.geometryrendering.styling.SizeMode;
 import nl.tue.geometrycore.io.BaseWriter;
 import nl.tue.geometrycore.io.LayeredWriter;
+import nl.tue.geometrycore.io.PagesWriter;
+import nl.tue.geometrycore.io.ViewsWriter;
 import nl.tue.geometrycore.util.ClipboardUtil;
 import nl.tue.geometrycore.util.DoubleUtil;
 import nl.tue.geometrycore.util.Pair;
@@ -53,7 +55,7 @@ import nl.tue.geometrycore.util.Pair;
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class IPEWriter extends BaseWriter<String, Appendable> implements LayeredWriter {
+public class IPEWriter extends BaseWriter<String, Appendable> implements LayeredWriter, PagesWriter, ViewsWriter {
 
     //<editor-fold defaultstate="collapsed" desc="STATIC METHODS">
     /**
@@ -352,6 +354,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
      *
      * @param layers layers for the new page
      */
+    @Override
     public void newPage(String... layers) {
 
         if (!_fileMode) {
@@ -393,6 +396,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
      *
      * @param visible visible layers in the new view
      */
+    @Override
     public void newView(String... visible) {
 
         if (!_fileMode) {

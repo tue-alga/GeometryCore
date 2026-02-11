@@ -32,7 +32,7 @@ public class CachedRenderer implements GeometryRenderer<Object>, LayeredWriter {
         }
     }
 
-    public void renderLayersTo(GeometryRenderer target, String... layers) {
+    public void renderViewTo(GeometryRenderer target, String... layers) {
         boolean in_layer = false;
         for (Command c : commands) {
             switch (c.getType()) {
@@ -85,6 +85,11 @@ public class CachedRenderer implements GeometryRenderer<Object>, LayeredWriter {
             }
         }
         return result;
+    }
+    
+    public String[] collectLayersArray() {
+        List<String> list = collectLayers();
+        return list.toArray(new String[list.size()]);
     }
 
     @Override
