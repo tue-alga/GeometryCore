@@ -151,7 +151,7 @@ public class SVGWriter extends BaseWriter<String, Appendable> {
     // IMPLEMENTATIONS OF BASE CLASS
     // -------------------------------------------------------------------------
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geos) {
+    public void draw(Iterable<? extends GeometryConvertable> geos) {
 
         try {
             _viewstrokewidth = _sizeMode == SizeMode.WORLD && _zoom != 1 ? _zoom * _strokewidth : _strokewidth;

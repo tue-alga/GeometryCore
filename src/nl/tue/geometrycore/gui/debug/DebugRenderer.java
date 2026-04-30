@@ -345,7 +345,7 @@ public class DebugRenderer implements GeometryRenderer<DebugPage>, LayeredWriter
     }
 
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geometries) {
+    public void draw(Iterable<? extends GeometryConvertable> geometries) {
         drawPage().draw(geometries);
     }
 

@@ -11,12 +11,12 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
 import nl.tue.geometrycore.geometry.Vector;
+import nl.tue.geometrycore.geometry.linear.PolyLine;
 import nl.tue.geometrycore.geometry.linear.Polygon;
 import nl.tue.geometrycore.io.BaseWriter;
 
@@ -90,14 +90,23 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
     }
 
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geometries) {
+    public void draw(Iterable<? extends GeometryConvertable> geometries) {
         for (GeometryConvertable gc : geometries) {
-            BaseGeometry g = gc.toGeometry();
-            switch (g.getGeometryType()) {
-                case POLYGON:
-                    break;
-                case GEOMETRYGROUP:
-                    break;
+            try {
+                BaseGeometry g = gc.toGeometry();
+                switch (g.getGeometryType()) {
+                    case VECTOR:
+                        write((Vector) g, null);
+                        break;
+                    case POLYGON:
+                        write((Polygon) g, null);
+                        break;
+                    default:
+                        System.err.println(".draw() interfaace for GeoJSONWriter currently does not support geometries of type " + g.getGeometryType());
+                        break;
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(GeoJSONWriter.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -114,6 +123,74 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
     @Override
     public BufferedWriter getRenderObject() {
         return _out;
+    }
+
+    public void write(Vector point, String[][] properties) throws IOException {
+        startFeature("Point");
+        _out.append(indent(4) + "\"coordinates\":" + space() + "" + toCoordinate(point) + newline());
+        endFeature(properties);
+    }
+
+    public void write(Vector[] points, String[][] properties) throws IOException {
+        if (points.length == 1) {
+            write(points[0], properties);
+            return;
+        }
+
+        startFeature("MultiPoint");
+        _out.append(indent(4) + "\"coordinates\":" + space() + "[" + newline());
+        for (Vector p : points) {
+            if (p != points[points.length - 1]) {
+                _out.append(indent(5) + "]," + newline());
+            } else {
+                _out.append(indent(5) + "]" + newline());
+            }
+        }
+        _out.append(indent(4) + "]" + newline());
+        endFeature(properties);
+    }
+
+    public void write(PolyLine line, String[][] properties) throws IOException {
+
+        startFeature("LineString");
+        _out.append(indent(4) + "\"coordinates\":" + space() + "[" + newline());
+        for (Vector p : line.vertices()) {
+            if (p != line.vertex(line.vertexCount() - 1)) {
+                _out.append(indent(5) + "]," + newline());
+            } else {
+                _out.append(indent(5) + "]" + newline());
+            }
+        }
+        _out.append(indent(4) + "]" + newline());
+        endFeature(properties);
+    }
+
+    public void write(PolyLine[] lines, String[][] properties) throws IOException {
+        if (lines.length == 1) {
+            write(lines[0], properties);
+            return;
+        }
+
+        startFeature("MultiLineString");
+        _out.append(indent(4) + "\"coordinates\":" + space() + "[" + newline());
+        for (PolyLine line : lines) {
+
+            _out.append(indent(5) + "[" + newline());
+            for (Vector p : line.vertices()) {
+                if (p != line.vertex(line.vertexCount() - 1)) {
+                    _out.append(indent(6) + "]," + newline());
+                } else {
+                    _out.append(indent(6) + "]" + newline());
+                }
+            }
+            if (line != lines[lines.length - 1]) {
+                _out.append(indent(5) + "]," + newline());
+            } else {
+                _out.append(indent(5) + "]" + newline());
+            }
+        }
+        _out.append(indent(4) + "]" + newline());
+        endFeature(properties);
     }
 
     public void write(Polygon polygon, String[][] properties) throws IOException {
@@ -142,6 +219,11 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
     }
 
     public void write(Polygon[][] multiPolygon, String[][] properties) throws IOException {
+        if (multiPolygon.length == 1) {
+            write(multiPolygon[0], properties);
+            return;
+        }
+
         startFeature("MultiPolygon");
         _out.append(indent(4) + "\"coordinates\":" + space() + "[" + newline());
         for (Polygon[] polygonWithHoles : multiPolygon) {
@@ -172,12 +254,6 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
         endFeature(properties);
     }
 
-    public void write(Vector point, String[][] properties) throws IOException {
-        startFeature("Point");
-        _out.append(indent(4) + "\"coordinates\":" + space() + "" + toCoordinate(point) + newline());
-        endFeature(properties);
-    }
-
     private void startFeature(String geomtype) throws IOException {
         if (!_first) {
             // close the previous one with a comma
@@ -196,7 +272,7 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
         _out.append(indent(3) + "\"properties\":" + space() + "{" + newline());
         if (properties != null) {
             for (String[] keyvalue : properties) {
-                _out.append(indent(3) + "\"" + keyvalue[0] + "\":" + space() + keyvalue[1] + (keyvalue == properties[properties.length-1] ? "" : ",") + newline());
+                _out.append(indent(3) + "\"" + keyvalue[0] + "\":" + space() + keyvalue[1] + (keyvalue == properties[properties.length - 1] ? "" : ",") + newline());
             }
         }
         _out.append(indent(3) + "}" + newline());

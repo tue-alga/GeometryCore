@@ -62,6 +62,14 @@ public class GeometryGroup<TPart extends BaseGeometry<TPart>> extends BaseGeomet
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="QUERIES">
+    public TPart part(int index) {
+        return _parts.get(index);
+    }
+
+    public int partCount() {
+        return _parts.size();
+    }
+
     @Override
     public double perimeter() {
         double per = 0;
@@ -70,7 +78,7 @@ public class GeometryGroup<TPart extends BaseGeometry<TPart>> extends BaseGeomet
         }
         return per;
     }
-    
+
     @Override
     public boolean onBoundary(Vector point, double prec) {
         for (TPart part : _parts) {
@@ -117,6 +125,10 @@ public class GeometryGroup<TPart extends BaseGeometry<TPart>> extends BaseGeomet
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="METHODS">
+    public void add(TPart geom) {
+        _parts.add(geom);
+    }
+    
     @Override
     public void translate(double deltaX, double deltaY) {
         for (TPart part : _parts) {

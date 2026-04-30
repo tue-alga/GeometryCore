@@ -181,7 +181,7 @@ public interface GeometryRenderer<TRenderObject> {
      *
      * @param geometries geometries to be drawn
      */
-    public void draw(Collection<? extends GeometryConvertable> geometries);
+    public void draw(Iterable<? extends GeometryConvertable> geometries);
 
     /**
      * Renders the given geometries using the current rendering settings.

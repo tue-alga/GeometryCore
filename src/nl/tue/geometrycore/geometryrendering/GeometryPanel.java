@@ -333,7 +333,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     }
 
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geos) {
+    public void draw(Iterable<? extends GeometryConvertable> geos) {
         _renderer.draw(geos);
     }
 

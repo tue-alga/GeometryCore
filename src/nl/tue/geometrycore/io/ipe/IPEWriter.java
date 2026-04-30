@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -707,7 +706,7 @@ public class IPEWriter extends BaseWriter<String, Appendable> implements Layered
     }
 
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geometries) {
+    public void draw(Iterable<? extends GeometryConvertable> geometries) {
         try {
             ensurePage();
 

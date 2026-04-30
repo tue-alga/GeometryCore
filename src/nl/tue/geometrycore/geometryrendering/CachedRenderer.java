@@ -3,7 +3,6 @@ package nl.tue.geometrycore.geometryrendering;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import nl.tue.geometrycore.geometry.BaseGeometry;
 import nl.tue.geometrycore.geometry.GeometryConvertable;
@@ -168,7 +167,7 @@ public class CachedRenderer implements GeometryRenderer<Object>, LayeredWriter {
     }
 
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geometries) {
+    public void draw(Iterable<? extends GeometryConvertable> geometries) {
         commands.add(new CmdDraw(geometries));
     }
 
@@ -481,23 +480,19 @@ public class CachedRenderer implements GeometryRenderer<Object>, LayeredWriter {
 
     private static class CmdDraw extends Command {
 
-        final BaseGeometry[] geometries;
+        final List<BaseGeometry> geometries;
 
-        CmdDraw(Collection<? extends GeometryConvertable> geometries) {
-            this.geometries = new BaseGeometry[geometries.size()];
-            int i = 0;
+        CmdDraw(Iterable<? extends GeometryConvertable> geometries) {
+            this.geometries = new ArrayList();
             for (GeometryConvertable gc : geometries) {
-                this.geometries[i] = gc.toGeometry().clone();
-                i++;
+                this.geometries.add(gc.toGeometry().clone());
             }
         }
 
         CmdDraw(GeometryConvertable... geometries) {
-            this.geometries = new BaseGeometry[geometries.length];
-            int i = 0;
+            this.geometries = new ArrayList(geometries.length);
             for (GeometryConvertable gc : geometries) {
-                this.geometries[i] = gc.toGeometry().clone();
-                i++;
+                this.geometries.add(gc.toGeometry().clone());
             }
         }
 

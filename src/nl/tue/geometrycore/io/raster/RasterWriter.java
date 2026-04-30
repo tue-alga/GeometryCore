@@ -285,7 +285,7 @@ public class RasterWriter extends BaseWriter<BufferedImage, Graphics2D> {
     }
 
     @Override
-    public void draw(Collection<? extends GeometryConvertable> geometries) {
+    public void draw(Iterable<? extends GeometryConvertable> geometries) {
         for (GeometryConvertable gc : geometries) {
             if (gc == null) {
                 continue;

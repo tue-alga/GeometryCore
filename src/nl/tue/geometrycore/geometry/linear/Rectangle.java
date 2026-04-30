@@ -148,7 +148,7 @@ public class Rectangle extends CyclicGeometry<Rectangle> {
      * @param include geometries to include in this computation
      * @return smallest enclosing rectangle
      */
-    public static Rectangle byBoundingBox(List<? extends GeometryConvertable> include) {
+    public static Rectangle byBoundingBox(Iterable<? extends GeometryConvertable> include) {
         Rectangle result = new Rectangle();
         result.includeGeometry(include);
         return result;

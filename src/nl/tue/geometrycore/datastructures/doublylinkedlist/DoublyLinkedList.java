@@ -79,7 +79,6 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
      */
     @Override
     public Iterator<TItem> iterator() {
-        final DoublyLinkedList<TItem> thislist = this;
         return new Iterator<TItem>() {
 
             TItem curr = null;
@@ -100,7 +99,7 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
             @Override
             public void remove() {
                 assert curr != null;
-                thislist.remove(curr);
+                DoublyLinkedList.this.remove(curr);
                 curr = null;
             }
         };
@@ -112,7 +111,6 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
      * @return backward iterator for this list
      */
     public Iterator<TItem> backwardIterator() {
-        final DoublyLinkedList<TItem> thislist = this;
         return new Iterator<TItem>() {
 
             TItem curr = null;
@@ -133,7 +131,7 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
             @Override
             public void remove() {
                 assert curr != null;
-                thislist.remove(curr);
+                DoublyLinkedList.this.remove(curr);
                 curr = null;
             }
         };
