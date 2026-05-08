@@ -151,7 +151,7 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
     }
 
     // -------------------------------------------------------------------------
-    // GET & SET
+    // GRAPH QUERIES
     // -------------------------------------------------------------------------
     public List<TVertex> getVertices() {
         return _vertices;
@@ -159,6 +159,14 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
 
     public List<TEdge> getEdges() {
         return _edges;
+    }
+
+    public int vertexCount() {
+        return _vertices.size();
+    }
+
+    public int edgeCount() {
+        return _edges.size();
     }
 
     // -------------------------------------------------------------------------
@@ -458,6 +466,11 @@ public abstract class SimpleGraph<TGeom extends OrientedGeometry<TGeom>, TVertex
         removeVertex(b);
     }
 
+    /**
+     *
+     * @deprecated Use {@link nl.tue.geometrycore.graphs.ChainDecomposition}
+     * instead.
+     */
     public Pair<List<GeometryString<TGeom>>, List<GeometryCycle<TGeom>>> computeChains() {
         List<GeometryCycle<TGeom>> islands = new ArrayList();
         List<GeometryString<TGeom>> chains = new ArrayList();
