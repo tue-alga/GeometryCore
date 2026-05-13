@@ -31,12 +31,12 @@ import nl.tue.geometrycore.graphs.simple.SimpleVertex;
  *
  * @author Wouter Meulemans (w.meulemans@tue.nl)
  */
-public class ChainDecomposition<TGraph extends SimpleGraph<TGeom, TVertex, TEdge>, TVertex extends SimpleVertex<TGeom, TVertex, TEdge>, TEdge extends SimpleEdge<TGeom, TVertex, TEdge>, TGeom extends OrientedGeometry<TGeom>> {
+public class ChainDecomposition<TGeom extends OrientedGeometry<TGeom>, TVertex extends SimpleVertex<TGeom, TVertex, TEdge>, TEdge extends SimpleEdge<TGeom, TVertex, TEdge>> {
 
-    private final TGraph _graph;
+    private final SimpleGraph<TGeom,TVertex,TEdge> _graph;
     private final List<Chain> _chains;
 
-    public ChainDecomposition(TGraph graph) {
+    public ChainDecomposition(SimpleGraph<TGeom,TVertex,TEdge> graph) {
         _graph = graph;
         _chains = new ArrayList();
         initialize();
