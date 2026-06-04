@@ -204,6 +204,8 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
 
             before.setPrevious(newitem);
             newitem.setPrevious(prev);
+            
+            newitem.setContainedInList(true);
 
             _size++;
         }
@@ -229,6 +231,8 @@ public class DoublyLinkedList<TItem extends DoublyLinkedListItem<TItem>> impleme
 
             next.setPrevious(newitem);
             newitem.setPrevious(after);
+            
+            newitem.setContainedInList(true);
 
             _size++;
         }
