@@ -285,7 +285,8 @@ public class SVGWriter extends BaseWriter<String, Appendable> {
         String dashAttr = getDashAttribute();
         String alphaAttr = getOpacityAttribute();
 
-        return " style=\"stroke-linecap:round;stroke-linejoin:round;" + strokeAttr + penAttr + fillAttr + dashAttr + alphaAttr + "\"";
+        return " style=\"stroke-linecap:round;stroke-linejoin:round;" + strokeAttr + penAttr + fillAttr + dashAttr + alphaAttr + "\""
+                + (_customAttributes == null ? "" : " " + _customAttributes);
     }
 
     private String getPointStyleAndTransform() {
@@ -295,7 +296,8 @@ public class SVGWriter extends BaseWriter<String, Appendable> {
         String dashAttr = getDashAttribute();
         String alphaAttr = getOpacityAttribute();
 
-        return " style=\"stroke-linecap:round;stroke-linejoin:round;" + strokeAttr + penAttr + fillAttr + dashAttr + alphaAttr + "\"";
+        return " style=\"stroke-linecap:round;stroke-linejoin:round;" + strokeAttr + penAttr + fillAttr + dashAttr + alphaAttr + "\""
+                + (_customAttributes == null ? "" : " " + _customAttributes);
     }
 
     private String getOpacityAttribute() {
@@ -733,11 +735,11 @@ public class SVGWriter extends BaseWriter<String, Appendable> {
     }
 
     private void writePathStart() throws IOException {
-        write("<path" + getStyleAndTransform() + (_customAttributes == null ? "" : " " + _customAttributes) + " d=\"");
+        write("<path" + getStyleAndTransform()  + " d=\"");
     }
 
     private void writePointPathStart() throws IOException {
-        write("<path" + getPointStyleAndTransform() + (_customAttributes == null ? "" : " " + _customAttributes) + " d=\"");
+        write("<path" + getPointStyleAndTransform() + " d=\"");
     }
 
     private void writeEndPath() throws IOException {

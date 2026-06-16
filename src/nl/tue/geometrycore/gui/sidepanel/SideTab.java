@@ -253,6 +253,7 @@ public class SideTab {
         JScrollPane scroll = new JScrollPane(label);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setBorder(null);
 
         addComponent(scroll, rows * _partof._elementHeight);
 

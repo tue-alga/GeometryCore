@@ -27,7 +27,6 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -51,8 +50,9 @@ import nl.tue.geometrycore.io.raster.RasterWriter;
  * {@link nl.tue.geometrycore.geometryrendering.GeometryRenderer} interface.
  *
  * It provides basic interactions for panning (right-mouse dragging), zooming
- * (scroll wheel, or scroll-wheel dragging, or right-mouse dragging with alt) and zoom-to-fit (spacebar). These
- * interactions are enabled by default, but can be disabled.
+ * (scroll wheel, or scroll-wheel dragging, or right-mouse dragging with alt)
+ * and zoom-to-fit (spacebar). These interactions are enabled by default, but
+ * can be disabled.
  *
  * It also provides the possibility to add basic interactions with geometric
  * objects. Specifically, it uses so-called interactive layers
@@ -81,9 +81,11 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     // interaction
     private double _margin = 0.03;
     private double _zoomRate = 11.0 / 10.0;
+    private double _scrollpanRate = 22.0;
     private int _animationStepDuration = 1000 / 50; // 50 FPS
     private boolean _panningEnabled = true;
     private boolean _zoomingEnabled = true;
+    private boolean _scrollpanningEnabled = true;
     // mouse events
     private int _mouseButton = MouseEvent.NOBUTTON;
     private Vector _mousePrevWorld;
@@ -132,7 +134,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
      * @Deprecated Replaced by isZoomingEnabled and isPanningEnabled.
      */
     public boolean isDefaultInteractionEnabled() {
-        return _zoomingEnabled && _panningEnabled;
+        return _zoomingEnabled && _panningEnabled && _scrollpanningEnabled;
     }
 
     /**
@@ -142,6 +144,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     public void setDefaultInteractionEnabled(boolean enableDefaultInteraction) {
         setPanningEnabled(enableDefaultInteraction);
         setZoomingEnabled(enableDefaultInteraction);
+        setScrollPanningEnabled(enableDefaultInteraction);
     }
 
     public boolean isPanningEnabled() {
@@ -160,6 +163,14 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         _zoomingEnabled = zoomingEnabled;
     }
 
+    public boolean isScrollPanningEnabled() {
+        return _scrollpanningEnabled;
+    }
+
+    public void setScrollPanningEnabled(boolean scrollpanningEnabled) {
+        _scrollpanningEnabled = scrollpanningEnabled;
+    }
+
     public double getMargin() {
         return _margin;
     }
@@ -174,6 +185,14 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
 
     public void setZoomRate(double zoomRate) {
         _zoomRate = zoomRate;
+    }
+
+    public double getScrollPanRate() {
+        return _scrollpanRate;
+    }
+
+    public void setScrollPanRate(double scrollpanRate) {
+        _scrollpanRate = scrollpanRate;
     }
 
     public Color getZoomboxColor() {
@@ -828,7 +847,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         boolean handled = false;
 
         if (_zoomingEnabled && !ctrl && !shift && !alt) {
-            double factor = e.getWheelRotation() < 0 ? _zoomRate : 1.0 / _zoomRate;
+            double factor = Math.pow(_zoomRate, e.getPreciseWheelRotation());
 
             zoom(factor);
 
@@ -836,6 +855,14 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
             Vector diff = Vector.subtract(_mousePrevView, postViewport);
 
             translateView(diff);
+            handled = true;
+        } else if (_scrollpanningEnabled && alt != shift && !ctrl) {
+            double delta = _scrollpanRate * e.getPreciseWheelRotation();
+            if (alt) {
+                translateView(0, delta);
+            } else {
+                translateView(delta, 0);
+            }
             handled = true;
         }
 
