@@ -80,7 +80,7 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
     private boolean _firstDraw = true;
     // interaction
     private double _margin = 0.03;
-    private double _zoomRate = 11.0 / 10.0;
+    private double _zoomRate = 10.0 / 11.0;
     private double _scrollpanRate = 22.0;
     private int _animationStepDuration = 1000 / 50; // 50 FPS
     private boolean _panningEnabled = true;
@@ -183,6 +183,13 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         return _zoomRate;
     }
 
+    /**
+     * Sets the zoom rate. By default, this should be a number strictly between
+     * 0 and 1. Note that it can also be set larger than 1, which inverts the
+     * semantics of scrolling up or down.
+     *
+     * @param zoomRate
+     */
     public void setZoomRate(double zoomRate) {
         _zoomRate = zoomRate;
     }
@@ -191,6 +198,13 @@ public abstract class GeometryPanel extends JPanel implements GeometryRenderer<O
         return _scrollpanRate;
     }
 
+    /**
+     * Sets the rate panning using scroll operations. By default, this number
+     * should be positive. Note that it can also be set to a negative value,
+     * which inverts the semantics of scrolling up or down.
+     *
+     * @param scrollpanRate
+     */
     public void setScrollPanRate(double scrollpanRate) {
         _scrollpanRate = scrollpanRate;
     }
