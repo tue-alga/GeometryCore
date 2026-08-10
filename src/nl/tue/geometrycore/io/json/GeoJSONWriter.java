@@ -139,12 +139,9 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
 
         startFeature("MultiPoint");
         _out.append(indent(4) + "\"coordinates\":" + space() + "[" + newline());
+        Vector last = points[points.length - 1];
         for (Vector p : points) {
-            if (p != points[points.length - 1]) {
-                _out.append(indent(5) + "]," + newline());
-            } else {
-                _out.append(indent(5) + "]" + newline());
-            }
+            _out.append(indent(5) + toCoordinate(p) + (p != last ? "," : "") + newline());
         }
         _out.append(indent(4) + "]" + newline());
         endFeature(properties);
@@ -154,12 +151,9 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
 
         startFeature("LineString");
         _out.append(indent(4) + "\"coordinates\":" + space() + "[" + newline());
+        Vector last = line.vertex(line.vertexCount() - 1);
         for (Vector p : line.vertices()) {
-            if (p != line.vertex(line.vertexCount() - 1)) {
-                _out.append(indent(5) + "]," + newline());
-            } else {
-                _out.append(indent(5) + "]" + newline());
-            }
+            _out.append(indent(5) + toCoordinate(p) + (p != last ? "," : "") + newline());
         }
         _out.append(indent(4) + "]" + newline());
         endFeature(properties);
@@ -176,13 +170,11 @@ public class GeoJSONWriter extends BaseWriter<Void, BufferedWriter> {
         for (PolyLine line : lines) {
 
             _out.append(indent(5) + "[" + newline());
+            Vector last = line.vertex(line.vertexCount() - 1);
             for (Vector p : line.vertices()) {
-                if (p != line.vertex(line.vertexCount() - 1)) {
-                    _out.append(indent(6) + "]," + newline());
-                } else {
-                    _out.append(indent(6) + "]" + newline());
-                }
+                _out.append(indent(6) + toCoordinate(p) + (p != last ? "," : "") + newline());
             }
+
             if (line != lines[lines.length - 1]) {
                 _out.append(indent(5) + "]," + newline());
             } else {
